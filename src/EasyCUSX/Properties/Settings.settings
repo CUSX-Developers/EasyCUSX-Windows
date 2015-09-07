@@ -8,9 +8,6 @@
     <Setting Name="password" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="ChinaDNS" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
     <Setting Name="REMpass" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>

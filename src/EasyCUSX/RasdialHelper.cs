@@ -6,13 +6,11 @@ using System.Collections.ObjectModel;
 using System.Net;
 using System.Threading;
 //---------------
-using ExceptionHandler;
 using DotRas;
 
 
 namespace rasdialHelper {
     class RasHelperMain {
-        ExHandlerMain exh = new ExHandlerMain();
 
         public bool DialUp(string _Username, string _Password, string _EntryName, out string _ResultMsg) {
             if (_Username == "" || _Password == "") {
@@ -62,7 +60,6 @@ namespace rasdialHelper {
                         _ResultMsg = "设备错误,请尝试重启电脑";
                         break;
                     default:
-                        exh.save(ex);
                         _ResultMsg = "错误" + ex.ErrorCode.ToString();
                         break;
                 }
@@ -113,7 +110,6 @@ namespace rasdialHelper {
             }
             catch (Exception ex) {
                 resultMsg = "程序异常";
-                exh.save(ex);
                 return false;
             }*/
         }
@@ -136,14 +132,13 @@ namespace rasdialHelper {
                 _ResultMsg = "成功";
                 return true;
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 _ResultMsg = "程序异常";
-                exh.save(ex);
                 return false;
             }
         }
 
-        public bool CreateEntry(string EntryName, bool DNSForwarding, out string resultMsg) {
+        public bool CreateEntry(string EntryName, out string resultMsg) {
             try {
                 RasPhoneBook UserPhoneBook = new RasPhoneBook();
                 string path = RasPhoneBook.GetPhoneBookPath(RasPhoneBookType.User);
@@ -152,12 +147,9 @@ namespace rasdialHelper {
                 // 如果该名称的PPPOE已经存在，则更新这个PPPOE服务器地址
                 if (UserPhoneBook.Entries.Contains(EntryName)) {
                     UserPhoneBook.Entries[EntryName].PhoneNumber = "";
-                    if (DNSForwarding == true) {
-                        UserPhoneBook.Entries[EntryName].DnsAddress = IPAddress.Loopback;
-                    }
-                    else {
-                        UserPhoneBook.Entries[EntryName].DnsAddress = null;
-                    }
+                    //DNS转发
+                    //UserPhoneBook.Entries[EntryName].DnsAddress = IPAddress.Loopback;
+                    UserPhoneBook.Entries[EntryName].DnsAddress = null;
                     // 不管当前PPPOE是否连接，服务器地址的更新总能成功，如果正在连接，则需要PPPOE重启后才能起作用
                     UserPhoneBook.Entries[EntryName].Update();
                     resultMsg = "设备更新成功";
@@ -174,14 +166,10 @@ namespace rasdialHelper {
                 // Find the device that will be used to dial the connection.
 
                 RasDevice device = RasDevice.GetDevices().Where(o => o.DeviceType == RasDeviceType.PPPoE).First();
-                RasEntry NewEntry = RasEntry.CreateBroadbandEntry(EntryName, device);    //建立宽带连接Entry
+                RasEntry NewEntry = RasEntry.CreateBroadbandEntry(EntryName, device);    //建立PPPoE Entry
                 NewEntry.PhoneNumber = "";
-                if (DNSForwarding == true) {
-                    NewEntry.DnsAddress = IPAddress.Loopback;
-                }
-                else {
-                    NewEntry.DnsAddress = null;
-                }
+                //NewEntry.DnsAddress = IPAddress.Loopback;
+                NewEntry.DnsAddress = null;
                 UserPhoneBook.Entries.Add(NewEntry);
                 resultMsg = "设备创建成功";
                 return true;
@@ -198,7 +186,10 @@ namespace rasdialHelper {
 
 
 
-            /*string pbk_string;
+            /*
+             * This is old way to dailup by using cmd (rasdial)
+             * 
+            string pbk_string;
 
             if (DNSon == false) {
                 pbk_string = EasyCUSX.Properties.Resources.pbk_normal;
@@ -249,9 +240,8 @@ namespace rasdialHelper {
                     return false;
                 }
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 resultMsg = "程序异常";
-                exh.save(ex);
                 return false;
             }
 

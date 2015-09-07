@@ -99,14 +99,14 @@
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="CloseButtonBackBrush" Storyboard.TargetProperty="Color" To="#FFD44027" Duration="0:0:0.3"/>
+                                            <ColorAnimation Storyboard.TargetName="CloseButtonBackBrush" Storyboard.TargetProperty="Color" To="#FFD44027" Duration="0:0:0.05"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.EnterActions>
                                 <Trigger.ExitActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="CloseButtonBackBrush" Storyboard.TargetProperty="Color" To="#00000000" Duration="0:0:0.3"/>
+                                            <ColorAnimation Storyboard.TargetName="CloseButtonBackBrush" Storyboard.TargetProperty="Color" To="#00000000" Duration="0:0:0.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.ExitActions>
