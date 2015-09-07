@@ -229,7 +229,7 @@ namespace rasdialHelper {
                 p.StandardInput.WriteLine("rasdial");
                 p.StandardInput.WriteLine("exit");
                 string strRst = p.StandardOutput.ReadToEnd();
-                strRst = strRst.Replace(@"\EasyCUSX", "asdkjh");
+                strRst = strRst.Replace(Environment.CurrentDirectory, "2333333");
                 if (strRst.Contains("EasyCUSX")) {
                     resultMsg = "网络已连接";
                     return true;
