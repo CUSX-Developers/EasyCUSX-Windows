@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Effects;
-using System.Windows.Forms; //trayIcon Control
-using System.IO;
-using System.Threading;
 using System.Diagnostics;
 using System.Net.NetworkInformation;
-//------------
+using System.Threading;
+using System.Windows;
+using System.Windows.Forms; //trayIcon Control
+using System.Windows.Input;
+using System.Windows.Media.Effects;
+//Class
 using rasdialHelper;
 using SocketHelper;
 
@@ -31,9 +29,6 @@ namespace EasyCUSX
         BlurEffect blur = new BlurEffect();
 
         NotifyIcon notify = new System.Windows.Forms.NotifyIcon();
-
-        //Thread
-        Thread t;
 
         //import class
         RasHelperMain d = new RasHelperMain();
@@ -69,23 +64,13 @@ namespace EasyCUSX
 
         public MainWindow()
         {
-
             InitializeComponent();
-
         }
 
         private void MainWPFWindow_Loaded(object sender, RoutedEventArgs e)
         {
-
             EasyCUSXInit();
-
         }
-
-
-
-
-
-
 
         #region Main Functions
 
@@ -96,31 +81,36 @@ namespace EasyCUSX
             KickOtherClient();
 
             //载入托盘图标
-            notify.Text = "易·山传";
+            notify.Text = "易·山传 OpenSource";
             notify.Icon = Properties.Resources.icon;
             notify.Visible = true;
             notify.Click += notify_Click;
-
-            //载入UI图片资源
-            LoadImg();
 
             //载入设置到UI
             LoadConfig();
 
             //载入当前网络状态到UI
-            string resultMsg;
-            if (d.CheckNetwork(out resultMsg))
+            SetCurrectWorkState(CurrectWorkStateFlag.Connecting);
+            DisplayStateMsg("检测网络状态...");
+
+            Thread temp = new Thread(() =>
             {
-                SetCurrectWorkState(CurrectWorkStateFlag.Connected);
-                SetWindowVisibility(false);
-            }
-            else
-            {
-                SetCurrectWorkState(CurrectWorkStateFlag.Idle);
-            }
+                string resultMsg;
+                if (d.CheckNetwork(out resultMsg))
+                {
+                    SetCurrectWorkState(CurrectWorkStateFlag.Connected);
+                    SetWindowVisibility(false);
+                }
+                else
+                {
+                    SetCurrectWorkState(CurrectWorkStateFlag.Idle);
+                }
+            });
+            temp.IsBackground = true;
+            temp.Start();
 
             //启动网络状态检查线程
-            t = new Thread(new ThreadStart(NetworkCheckLoop));
+            Thread t = new Thread(new ThreadStart(NetworkCheckLoop));
             t.IsBackground = true;
             t.Start();
         }
@@ -313,35 +303,6 @@ namespace EasyCUSX
         #region UI
 
         //Entrys
-        private void LoadImg()
-        {
-            System.Drawing.Bitmap bitmap;
-            MemoryStream stream = new MemoryStream();
-            ImageSourceConverter Converter = new ImageSourceConverter();
-
-            //leftBanner
-            bitmap = Properties.Resources.leftbanner;
-            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-            MainWPFWindow.LeftBannerImageBrush.ImageSource = (ImageSource)Converter.ConvertFrom(stream);
-
-            //TopBanner
-            bitmap = Properties.Resources.topbanner;
-            stream = new MemoryStream();
-            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-            MainWPFWindow.TopBannerImageBrush.ImageSource = (ImageSource)Converter.ConvertFrom(stream);
-
-            //username icon
-            bitmap = Properties.Resources.usernameICON;
-            stream = new MemoryStream();
-            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-            MainWPFWindow.userICON.ImageSource = (ImageSource)Converter.ConvertFrom(stream);
-
-            //password icon
-            bitmap = Properties.Resources.passwordICON;
-            stream = new MemoryStream();
-            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-            MainWPFWindow.passICON.ImageSource = (ImageSource)Converter.ConvertFrom(stream);
-        }
 
         private void SetCurrectWorkState(CurrectWorkStateFlag Flag, string ErrorMsg = "")
         {
@@ -506,16 +467,6 @@ namespace EasyCUSX
         #region Events
 
         //UI
-        private void Border_down_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            TextBox_Password.Focus();
-        }
-
-        private void Border_up_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            TextBox_Username.Focus();
-        }
-
         private void AdvancedButton_Expanded(object sender, RoutedEventArgs e)
         {
             Expanded();
@@ -542,14 +493,6 @@ namespace EasyCUSX
             }
         }
 
-        private void MainWPFWindow_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                this.DragMove();
-            }
-        }
-
         private void notify_Click(object sender, EventArgs e)
         {
             if (this.Visibility == Visibility.Visible)
@@ -562,6 +505,11 @@ namespace EasyCUSX
             }
         }
 
+        private void MainWPFWindow_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            this.DragMove();
+        }
+
         //Functions
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
@@ -572,7 +520,7 @@ namespace EasyCUSX
             string u = TextBox_Username.Text;
             string p = TextBox_Password.Password;
 
-            t = new Thread(() => WANConnect(u, p));
+            Thread t = new Thread(() => WANConnect(u, p));
             t.IsBackground = true;
             t.Start();
         }
@@ -585,7 +533,7 @@ namespace EasyCUSX
             }
             if (WANconnected == true)
             {
-                t = new Thread(() => WANDisconnect()); //WANDisconnectButton
+                Thread t = new Thread(() => WANDisconnect()); //WANDisconnectButton
                 t.IsBackground = true;
                 t.Start();
             }
@@ -618,7 +566,7 @@ namespace EasyCUSX
                 }
                 else
                 {
-                    System.Windows.Forms.MessageBox.Show("重置失败!");
+                    System.Windows.Forms.MessageBox.Show("重置失败!\r\n权限可能不足");
                 }
             }
         }
@@ -654,6 +602,5 @@ namespace EasyCUSX
         }
 
         #endregion
-
     }
 }

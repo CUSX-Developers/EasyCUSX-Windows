@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Collections.ObjectModel;
+using System.Linq;
 using System.Net;
 using System.Threading;
-//---------------
+//Other
 using DotRas;
 
 
@@ -65,7 +65,10 @@ namespace rasdialHelper {
                 }
                 return false;
             }
-            /*try {
+            /*
+             * Old way to Dailup
+             * 
+             try {
                 p.StartInfo.FileName = "cmd.exe";
                 p.StartInfo.UseShellExecute = false;
                 p.StartInfo.RedirectStandardInput = true;
@@ -187,7 +190,7 @@ namespace rasdialHelper {
 
 
             /*
-             * This is old way to dailup by using cmd (rasdial)
+             * Old way to Create Entry
              * 
             string pbk_string;
 
@@ -255,7 +258,6 @@ namespace rasdialHelper {
             catch (Exception) {
                 return false;
             }
-
         }
     }
 }

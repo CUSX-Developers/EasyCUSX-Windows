@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Text;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 namespace SocketHelper {
     class SocketHelperMain {
