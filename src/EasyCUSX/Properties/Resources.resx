@@ -121,12 +121,6 @@
   <data name="icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\icon.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="leftbanner" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\leftbanner.jpg;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="passwordICON" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\passwordICON.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="pbk_ChinaDNS" xml:space="preserve">
     <value>[EasyCUSX]
 Encoding=1
@@ -327,11 +321,5 @@ DEVICE=PPPoE
 LastSelectedPhone=0
 PromoteAlternates=0
 TryNextAlternateOnFail=1</value>
-  </data>
-  <data name="topbanner" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\topbanner.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="usernameICON" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\usernameICON.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>
