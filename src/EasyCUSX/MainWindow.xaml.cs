@@ -21,9 +21,11 @@ namespace EasyCUSX
 
         #region init
 
-        //网络状态标识
+        //网络
         bool WANconnecting = false;
         bool WANconnected = false;
+        string pppoeusername;
+        string pppoepassword;
 
         //UI
         BlurEffect blur = new BlurEffect();
@@ -98,6 +100,11 @@ namespace EasyCUSX
                 string resultMsg;
                 if (d.CheckNetwork(out resultMsg))
                 {
+                    this.Dispatcher.Invoke(new Action(() =>
+                    {
+                        pppoeusername = TextBox_Username.Text;
+                        pppoepassword = TextBox_Password.Password;
+                    }));
                     SetCurrectWorkState(CurrectWorkStateFlag.Connected);
                     SetWindowVisibility(false);
                 }
@@ -205,6 +212,7 @@ namespace EasyCUSX
         {
             SetCurrectWorkState(CurrectWorkStateFlag.Disconnecting);
             string Result;
+            SendDisconnectAuth(pppoeusername, d.getCurrentIP(), out Result);
             if (d.HangUp("EasyCUSX", out Result))
             {
                 SetCurrectWorkState(CurrectWorkStateFlag.Idle);
@@ -251,12 +259,6 @@ namespace EasyCUSX
                     _inResult = Result;
                     return false;
                 }
-                if (!s.Send4Recv("AUTH 33ss333asasasc3ddsd5434fsdasas5\r\n", out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
                 if (!s.JustSend("*3\r\n", out Result))
                 {
                     s.SocketClose();
@@ -287,13 +289,72 @@ namespace EasyCUSX
                     _inResult = Result;
                     return false;
                 }
-                s.SocketClose();  //auth complete
+                if (!s.JustSend("QUIT\r\n", out Result))
+                {
+                    s.SocketClose();
+                    _inResult = Result;
+                    return false;
+                }
+                s.SocketClose();  //auth complete 
             }
             else
             {
                 _inResult = Result;
                 return false;
             }
+            _inResult = "AuthSuccess";
+            return true;
+        }
+
+        private bool SendDisconnectAuth(string u, string IP, out string _inResult)
+        {
+            string Result;
+            SocketHelperMain s = new SocketHelperMain();
+            if (s.SocketConnect("172.18.4.3", 6379, out Result))
+            {
+                if (!s.Send4Recv("AUTH 33ss333asasasc3ddsd5434fsdasas5\r\n", out Result))
+                {
+                    s.SocketClose();
+                    _inResult = Result;
+                    return false;
+                }
+                if (!s.JustSend("*3\r\n", out Result))
+                {
+                    s.SocketClose();
+                    _inResult = Result;
+                    return false;
+                }
+                if (!s.JustSend(string.Format("$7\r\npublish\r\n$11\r\nclientcheck\r\n$33\r\ndownline:{0}:{1}\r\n", u, IP), out Result))
+                {
+                    s.SocketClose();
+                    _inResult = Result;
+                    return false;
+                } 
+                if (!s.JustSend(string.Format("$7\r\npublish\r\n$11\r\nclientcheck\r\n$33\r\ndownline:{0}:{1}\r\n", u, IP), out Result))
+                {
+                    s.SocketClose();
+                    _inResult = Result;
+                    return false;
+                }
+                if (!s.JustSend("QUIT\r\n", out Result))
+                {
+                    s.SocketClose();
+                    _inResult = Result;
+                    return false;
+                }
+                if (!s.JustSend("QUIT\r\n", out Result))
+                {
+                    s.SocketClose();
+                    _inResult = Result;
+                    return false;
+                }
+                s.SocketClose();  //complete
+            }
+            else
+            {
+                _inResult = Result;
+                return false;
+            } 
             _inResult = "AuthSuccess";
             return true;
         }
@@ -517,10 +578,10 @@ namespace EasyCUSX
             SaveConfig();
 
             //开线程拨号
-            string u = TextBox_Username.Text;
-            string p = TextBox_Password.Password;
+            pppoeusername = TextBox_Username.Text;
+            pppoepassword = TextBox_Password.Password;
 
-            Thread t = new Thread(() => WANConnect(u, p));
+            Thread t = new Thread(() => WANConnect(pppoeusername, pppoepassword));
             t.IsBackground = true;
             t.Start();
         }
