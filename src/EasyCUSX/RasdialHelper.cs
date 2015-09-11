@@ -9,16 +9,21 @@ using System.Threading;
 using DotRas;
 
 
-namespace rasdialHelper {
-    class RasHelperMain {
+namespace rasdialHelper
+{
+    class RasHelperMain
+    {
 
-        public bool DialUp(string _Username, string _Password, string _EntryName, out string _ResultMsg) {
-            if (_Username == "" || _Password == "") {
+        public bool DialUp(string _Username, string _Password, string _EntryName, out string _ResultMsg)
+        {
+            if (_Username == "" || _Password == "")
+            {
                 _ResultMsg = "请填写用户名密码";
                 return false;
             }
 
-            try {
+            try
+            {
                 RasDialer dialer = new RasDialer();
                 dialer.EntryName = _EntryName;
                 dialer.PhoneNumber = "";
@@ -28,25 +33,31 @@ namespace rasdialHelper {
                 dialer.Timeout = 1000;
                 RasHandle myras = dialer.Dial();
                 int i = 0;
-                while (myras.IsInvalid) {
-                    if (i == 3) {
+                while (myras.IsInvalid)
+                {
+                    if (i == 3)
+                    {
                         break;
                     }
                     i++;
                     myras = dialer.Dial();
                     Thread.Sleep(1000);
                 }
-                if (!myras.IsInvalid) {
+                if (!myras.IsInvalid)
+                {
                     _ResultMsg = "拨号成功";
                     return true;
                 }
-                else {
+                else
+                {
                     _ResultMsg = "拨号失败";
                     return false;
                 }
             }
-            catch (RasException ex) {
-                switch (ex.ErrorCode.ToString()) {
+            catch (RasException ex)
+            {
+                switch (ex.ErrorCode.ToString())
+                {
                     case "651":   //no response
                         _ResultMsg = "网线/网口/驱动故障";
                         break;
@@ -117,8 +128,10 @@ namespace rasdialHelper {
             }*/
         }
 
-        public bool HangUp(string _EntryName, out string _ResultMsg) {
-            try {
+        public bool HangUp(string _EntryName, out string _ResultMsg)
+        {
+            try
+            {
                 Process p = new Process();
                 p.StartInfo.FileName = "cmd.exe";
                 p.StartInfo.UseShellExecute = false;
@@ -135,20 +148,24 @@ namespace rasdialHelper {
                 _ResultMsg = "成功";
                 return true;
             }
-            catch (Exception) {
+            catch (Exception)
+            {
                 _ResultMsg = "程序异常";
                 return false;
             }
         }
 
-        public bool CreateEntry(string EntryName, out string resultMsg) {
-            try {
+        public bool CreateEntry(string EntryName, out string resultMsg)
+        {
+            try
+            {
                 RasPhoneBook UserPhoneBook = new RasPhoneBook();
                 string path = RasPhoneBook.GetPhoneBookPath(RasPhoneBookType.User);
                 UserPhoneBook.Open(path);
 
                 // 如果该名称的PPPOE已经存在，则更新这个PPPOE服务器地址
-                if (UserPhoneBook.Entries.Contains(EntryName)) {
+                if (UserPhoneBook.Entries.Contains(EntryName))
+                {
                     UserPhoneBook.Entries[EntryName].PhoneNumber = "";
                     //DNS转发
                     //UserPhoneBook.Entries[EntryName].DnsAddress = IPAddress.Loopback;
@@ -177,11 +194,13 @@ namespace rasdialHelper {
                 resultMsg = "设备创建成功";
                 return true;
             }
-            catch (RasException ex) {
+            catch (RasException ex)
+            {
                 resultMsg = ex.ErrorCode.ToString();
                 return false;
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 resultMsg = ex.ToString();
                 return false;
             }
@@ -216,8 +235,10 @@ namespace rasdialHelper {
             }*/
         }
 
-        public bool CheckNetwork(out string resultMsg) {
-            try {
+        public bool CheckNetwork(out string resultMsg)
+        {
+            try
+            {
                 Process p = new Process();
                 p.StartInfo.FileName = "cmd.exe";
                 p.StartInfo.UseShellExecute = false;
@@ -230,34 +251,55 @@ namespace rasdialHelper {
                 p.StandardInput.WriteLine("exit");
                 string strRst = p.StandardOutput.ReadToEnd();
                 strRst = strRst.Replace(Environment.CurrentDirectory, "2333333");
-                if (strRst.Contains("EasyCUSX")) {
+                if (strRst.Contains("EasyCUSX"))
+                {
                     resultMsg = "网络已连接";
                     return true;
                 }
-                if (strRst.Contains("PPPOE")) {
+                if (strRst.Contains("PPPOE"))
+                {
                     resultMsg = "通过学校客户端连接";
                     return true;
                 }
-                else {
+                else
+                {
                     resultMsg = "网络未连接";
                     return false;
                 }
             }
-            catch (Exception) {
+            catch (Exception)
+            {
                 resultMsg = "程序异常";
                 return false;
             }
 
         }
 
-        public bool FlushAllEntry() {
-            try {
+        public bool FlushAllEntry()
+        {
+            try
+            {
                 File.Delete(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Microsoft\Network\Connections\Pbk\rasphone.pbk");
                 return true;
             }
-            catch (Exception) {
+            catch (Exception)
+            {
                 return false;
             }
         }
+        public string getCurrentIP()
+        {
+            foreach (RasConnection connection in RasConnection.GetActiveConnections())
+            {
+                if (connection.EntryName == "EasyCUSX" || connection.EntryName == "PPPOE")
+                {
+                    RasIPInfo ipAddresses = (RasIPInfo)connection.GetProjectionInfo(RasProjectionType.IP);
+                    Console.WriteLine("I Found IP:" + ipAddresses.IPAddress.ToString());
+                    return ipAddresses.IPAddress.ToString();
+                }
+            }
+            return "0.0.0.0";
+        }
+
     }
 }
