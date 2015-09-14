@@ -163,16 +163,15 @@ namespace rasdialHelper
                 string path = RasPhoneBook.GetPhoneBookPath(RasPhoneBookType.User);
                 UserPhoneBook.Open(path);
 
-                // 如果该名称的PPPOE已经存在，则更新这个PPPOE服务器地址
+                // if the EntryName exist,then ignore.
                 if (UserPhoneBook.Entries.Contains(EntryName))
                 {
-                    UserPhoneBook.Entries[EntryName].PhoneNumber = "";
-                    //DNS转发
+                    //UserPhoneBook.Entries[EntryName].PhoneNumber = "";
                     //UserPhoneBook.Entries[EntryName].DnsAddress = IPAddress.Loopback;
-                    UserPhoneBook.Entries[EntryName].DnsAddress = null;
+                    //UserPhoneBook.Entries[EntryName].DnsAddress = null;
                     // 不管当前PPPOE是否连接，服务器地址的更新总能成功，如果正在连接，则需要PPPOE重启后才能起作用
-                    UserPhoneBook.Entries[EntryName].Update();
-                    resultMsg = "设备更新成功";
+                    //UserPhoneBook.Entries[EntryName].Update();
+                    resultMsg = "设备已就绪";
                     return true;
                 }
 
