@@ -178,7 +178,7 @@ namespace EasyCUSX
             Thread.Sleep(500);
 
             //创建Entry
-            DisplayStateMsg("正在创建设备...");
+            DisplayStateMsg("正在检查设备...");
             if (!d.CreateEntry("EasyCUSX", out Result))
             {
                 DisplayStateMsg(Result);
@@ -187,7 +187,7 @@ namespace EasyCUSX
             }
 
             //开始拨号
-            DisplayStateMsg("正在拨号中...");
+            DisplayStateMsg("正在连接中...");
             if (!d.DialUp(u, p, "EasyCUSX", out Result))
             {
                 SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
