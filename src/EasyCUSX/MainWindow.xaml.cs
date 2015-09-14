@@ -521,10 +521,6 @@ namespace EasyCUSX
 
         #endregion
 
-
-
-
-
         #region Events
 
         //UI
@@ -568,7 +564,10 @@ namespace EasyCUSX
 
         private void MainWPFWindow_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            this.DragMove();
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                this.DragMove();
+            }
         }
 
         //Functions
@@ -633,10 +632,6 @@ namespace EasyCUSX
         }
 
         #endregion
-
-
-
-
 
         #region Data
 

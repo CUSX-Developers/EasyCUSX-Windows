@@ -66,7 +66,7 @@
             <Button x:Name="FixEntryButton" Content="重置网络连接" HorizontalAlignment="Left" Margin="15,166.486,0,0" VerticalAlignment="Top" Width="119.415" Style="{DynamicResource BlueButton}" FontSize="14" Click="FixEntryButton_Click"/>
         </Grid>
         <!--WorkMsg Label-->
-        <TextBox x:Name="WorkMsg" Margin="10,140.563,10,0" TextWrapping="Wrap" Text="WorkMsgArea" TextAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" FontSize="20" Grid.Column="1" AllowDrop="False" Focusable="False" IsTabStop="False" Height="30"/>
+        <TextBox x:Name="WorkMsg" Margin="10,140.563,10,0" TextWrapping="Wrap" Text="WorkMsgArea" TextAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" FontSize="20" Grid.Column="1" AllowDrop="False" Focusable="False" IsTabStop="False" Height="30" IsReadOnly="True"/>
         <!--Disconnect Button-->
         <Button x:Name="WorkButton" Content="" Margin="39,239.94,39,50" Style="{DynamicResource BlueButton}" IsDefault="True" Width="302" Grid.Column="1" Visibility="Hidden" Click="WorkButton_Click"/>
 
