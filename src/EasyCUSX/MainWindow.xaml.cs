@@ -198,9 +198,14 @@ namespace EasyCUSX
             DisplayStateMsg("正在验证中...");
             if (!SendSocketAuth(u, out Result))
             {
-                WANDisconnect();
-                SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
-                return;
+                DisplayStateMsg("正在重试...");
+                //retry once
+                if (!SendSocketAuth(u, out Result))
+                {
+                    WANDisconnect();
+                    SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
+                    return;
+                }
             }
 
             SetCurrectWorkState(CurrectWorkStateFlag.Connected);
@@ -329,7 +334,7 @@ namespace EasyCUSX
                     s.SocketClose();
                     _inResult = Result;
                     return false;
-                } 
+                }
                 if (!s.JustSend(string.Format("$7\r\npublish\r\n$11\r\nclientcheck\r\n$33\r\ndownline:{0}:{1}\r\n", u, IP), out Result))
                 {
                     s.SocketClose();
@@ -354,7 +359,7 @@ namespace EasyCUSX
             {
                 _inResult = Result;
                 return false;
-            } 
+            }
             _inResult = "AuthSuccess";
             return true;
         }
