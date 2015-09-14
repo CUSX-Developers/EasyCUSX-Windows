@@ -203,7 +203,7 @@ namespace EasyCUSX
                 if (!SendSocketAuth(u, out Result))
                 {
                     WANDisconnect();
-                    SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
+                    SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, "网络不稳定,请重试");
                     return;
                 }
             }
