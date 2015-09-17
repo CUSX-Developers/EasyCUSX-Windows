@@ -27,6 +27,8 @@ namespace EasyCUSX
         string pppoeusername;
         string pppoepassword;
 
+        bool detectNetworkStatus;
+
         //UI
         BlurEffect blur = new BlurEffect();
 
@@ -91,7 +93,7 @@ namespace EasyCUSX
             //载入设置到UI
             LoadConfig();
 
-            //载入当前网络状态到UI
+            //载入当前网络状态到UI并设置必要的状态参数
             SetCurrectWorkState(CurrectWorkStateFlag.Connecting);
             DisplayStateMsg("检测网络状态...");
 
@@ -102,9 +104,13 @@ namespace EasyCUSX
                 {
                     this.Dispatcher.Invoke(new Action(() =>
                     {
+                        //Set for disconnect process
                         pppoeusername = TextBox_Username.Text;
                         pppoepassword = TextBox_Password.Password;
+                        //设置是否检测网络波动
+                        detectNetworkStatus = CheckBox_networkDetect.IsChecked.Value;
                     }));
+                    //设置UI
                     SetCurrectWorkState(CurrectWorkStateFlag.Connected);
                     SetWindowVisibility(false);
                 }
@@ -126,7 +132,7 @@ namespace EasyCUSX
         {
             while (true)
             {
-                if (WANconnected == true) //检查有线校园网是否保持着连接
+                if (WANconnected) //检查有线校园网是否保持着连接
                 {
                     string Result;
                     if (!d.CheckNetwork(out Result))
@@ -136,7 +142,7 @@ namespace EasyCUSX
                     }
                 }
 
-                if (WANconnected == true) //检测校园网络波动
+                if (WANconnected && detectNetworkStatus) //检测校园网络波动
                 {
                     PingReply pingReply = ping.Send("172.18.4.3");
                     if (pingReply.Status != IPStatus.Success)
@@ -581,10 +587,13 @@ namespace EasyCUSX
             //保存选项
             SaveConfig();
 
-            //开线程拨号
+            //拨号部分
+            //Set for disconnect
             pppoeusername = TextBox_Username.Text;
             pppoepassword = TextBox_Password.Password;
-
+            //设置是否检测网络波动
+            detectNetworkStatus = CheckBox_networkDetect.IsChecked.Value;
+            //开始拨号
             Thread t = new Thread(() => WANConnect(pppoeusername, pppoepassword));
             t.IsBackground = true;
             t.Start();
@@ -643,7 +652,7 @@ namespace EasyCUSX
         private void SaveConfig()
         {
             Properties.Settings.Default.username = TextBox_Username.Text;
-            if (CheckBox_REMpass.IsChecked == true)
+            if (CheckBox_REMpass.IsChecked.Value)
             {
                 Properties.Settings.Default.password = TextBox_Password.Password;
             }
@@ -652,6 +661,7 @@ namespace EasyCUSX
                 Properties.Settings.Default.password = "";
             }
             Properties.Settings.Default.REMpass = CheckBox_REMpass.IsChecked.Value;
+            Properties.Settings.Default.NetworkDetect = CheckBox_networkDetect.IsChecked.Value;
             Properties.Settings.Default.Save();
         }
 
@@ -660,6 +670,7 @@ namespace EasyCUSX
             TextBox_Username.Text = Properties.Settings.Default.username;
             TextBox_Password.Password = Properties.Settings.Default.password;
             CheckBox_REMpass.IsChecked = Properties.Settings.Default.REMpass;
+            CheckBox_networkDetect.IsChecked = Properties.Settings.Default.NetworkDetect;
         }
 
         #endregion
