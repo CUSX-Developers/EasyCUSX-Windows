@@ -319,6 +319,11 @@ namespace EasyCUSX
 
         private bool SendDisconnectAuth(string u, string IP, out string _inResult)
         {
+            if (u == string.Empty || IP == string.Empty)
+            {
+                _inResult = "Invalid";
+                return true;
+            }
             string Result;
             SocketHelperMain s = new SocketHelperMain();
             if (s.SocketConnect("172.18.4.3", 6379, out Result))
