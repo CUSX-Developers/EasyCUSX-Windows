@@ -50,7 +50,7 @@
             <CheckBox x:Name="CheckBox_REMpass" Content="记住密码" HorizontalAlignment="Left" Margin="65,209,0,0" VerticalAlignment="Top" Width="77" Height="15" FontSize="14"/>
 
             <!--Advanced Button-->
-            <Expander x:Name="AdvancedButton" Grid.Column="1" Header="" HorizontalAlignment="Left" Margin="348,300.4,0,-15.4" VerticalAlignment="Top" ExpandDirection="Right" Expanded="AdvancedButton_Expanded" Collapsed="AdvancedButton_Collapsed"/>
+            <Expander x:Name="AdvancedButton" Header="" HorizontalAlignment="Left" Margin="348,300.4,0,0" VerticalAlignment="Top" ExpandDirection="Right" Expanded="AdvancedButton_Expanded" Collapsed="AdvancedButton_Collapsed" Height="23"/>
 
             <!--CloseButton-->
             <Button x:Name="CloseButton" Grid.Column="1" HorizontalAlignment="Left" Margin="350,0,0,0" VerticalAlignment="Top" Style="{DynamicResource CloseButton}" Click="CloseButton_Click">
