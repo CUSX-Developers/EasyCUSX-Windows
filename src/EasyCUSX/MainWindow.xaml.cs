@@ -236,85 +236,35 @@ namespace EasyCUSX
 
         private bool SendSocketAuth(string u, out string _inResult)
         {
-            string Result;
             SocketHelperMain s = new SocketHelperMain();
-            if (s.SocketConnect("172.18.4.3", 6379, out Result))
+            string[] datas = {
+                             "AUTH 33ss333asasasc3ddsd5434fsdasas5\r\n",
+                             //"GET clientver\r\n",
+                             string.Format("*3\r\n$7\r\npublish\r\n$11\r\nclientcheck\r\n${0}\r\ncheckuser:{1}\r\n", (u.Length + 10).ToString(), u),
+                             //"GET openurl\r\n",
+                             string.Format("*3\r\n$4\r\nSADD\r\n$7\r\nalluser\r\n${0}\r\n{1}\r\n", u.Length.ToString(), u),
+                             string.Format("*3\r\n$6\r\nCLIENT\r\n$7\r\nSETNAME\r\n${0}\r\n{1}\r\n", u.Length.ToString(), u),
+                             string.Format("*3\r\n$9\r\nsubscribe\r\n$12\r\ncheckprocess\r\n${0}\r\n@{1}\r\n", (u.Length + 1).ToString(), u)
+                             };
+            if (s.SocketConnect("172.18.4.3", 6379, out _inResult))
             {
-                if (!s.Send4Recv("AUTH 33ss333asasasc3ddsd5434fsdasas5\r\n", out Result))
+                foreach (string data in datas)
                 {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
+                    if (!s.Send4Recv(data, out _inResult))
+                    {
+                        s.SocketClose();
+                        return false;
+                    }
                 }
-                if (!s.Send4Recv("GET clientver\r\n", out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.JustSend("*3\r\n", out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.Send4Recv(string.Format("$7\r\npublish\r\n$11\r\nclientcheck\r\n$22\r\ncheckuser:{0}\r\n", u), out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.Send4Recv("GET openurl\r\n", out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.JustSend("*3\r\n", out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.Send4Recv(string.Format("$4\r\nSADD\r\n$7\r\nalluser\r\n$12\r\n{0}\r\n", u), out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.JustSend("*3\r\n", out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.Send4Recv(string.Format("$6\r\nCLIENT\r\n$7\r\nSETNAME\r\n$12\r\n{0}\r\n", u), out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.Send4Recv(string.Format("subscribe checkprocess @{0}\r\n\r\n", u), out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.JustSend("QUIT\r\n", out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
+                s.JustSend("QUIT\r\n", out _inResult);
                 s.SocketClose();  //auth complete 
+                _inResult = "AuthSuccess";
+                return true;
             }
             else
             {
-                _inResult = Result;
                 return false;
             }
-            _inResult = "AuthSuccess";
-            return true;
         }
 
         private bool SendDisconnectAuth(string u, string IP, out string _inResult)
@@ -324,55 +274,30 @@ namespace EasyCUSX
                 _inResult = "Invalid";
                 return true;
             }
-            string Result;
             SocketHelperMain s = new SocketHelperMain();
-            if (s.SocketConnect("172.18.4.3", 6379, out Result))
+            string[] datas = {
+                             "AUTH 33ss333asasasc3ddsd5434fsdasas5\r\n",
+                             string.Format("$7\r\npublish\r\n$11\r\nclientcheck\r\n${0}\r\ndownline:{1}:{2}\r\n", (u.Length + IP.Length + 10).ToString(), u, IP)
+                             };
+            if (s.SocketConnect("172.18.4.3", 6379, out _inResult))
             {
-                if (!s.Send4Recv("AUTH 33ss333asasasc3ddsd5434fsdasas5\r\n", out Result))
+                foreach (string data in datas)
                 {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
+                    if (!s.Send4Recv(data, out _inResult))
+                    {
+                        s.SocketClose();
+                        return false;
+                    }
                 }
-                if (!s.JustSend("*3\r\n", out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.JustSend(string.Format("$7\r\npublish\r\n$11\r\nclientcheck\r\n$33\r\ndownline:{0}:{1}\r\n", u, IP), out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.JustSend(string.Format("$7\r\npublish\r\n$11\r\nclientcheck\r\n$33\r\ndownline:{0}:{1}\r\n", u, IP), out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.JustSend("QUIT\r\n", out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
-                if (!s.JustSend("QUIT\r\n", out Result))
-                {
-                    s.SocketClose();
-                    _inResult = Result;
-                    return false;
-                }
+                s.JustSend("QUIT\r\n", out _inResult);
                 s.SocketClose();  //complete
+                _inResult = "AuthSuccess";
+                return true;
             }
             else
             {
-                _inResult = Result;
                 return false;
             }
-            _inResult = "AuthSuccess";
-            return true;
         }
 
         #endregion
