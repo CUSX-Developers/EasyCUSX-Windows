@@ -8,11 +8,11 @@ using System.Windows;
 // 特性集控制。更改这些特性值可修改
 // 与程序集关联的信息。
 [assembly: AssemblyTitle("EasyCUSX")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("A Third-party PPPoE Client for CUSX school network")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("SCD Team")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("EasyCUSX")]
-[assembly: AssemblyCopyright("Copyright ©  2014-2015 SCD Team. All rights reserved.")]
+[assembly: AssemblyCopyright("Copyright ©  2014-2015 Lake Chan. All rights reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
