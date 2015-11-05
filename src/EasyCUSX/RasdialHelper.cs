@@ -255,9 +255,14 @@ namespace rasdialHelper
                     resultMsg = "网络已连接";
                     return true;
                 }
-                if (strRst.Contains("PPPOE"))
+                else if (strRst.Contains("PPPOE"))
                 {
                     resultMsg = "通过学校客户端连接";
+                    return true;
+                }
+                else if (strRst.Contains("Connected") || strRst.Contains("已连接"))
+                {
+                    resultMsg = "通过其他方式连接";
                     return true;
                 }
                 else
