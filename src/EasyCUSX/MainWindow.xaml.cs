@@ -27,7 +27,7 @@ namespace EasyCUSX
         string pppoeusername;
         string pppoepassword;
 
-        bool detectNetworkStatus;
+        bool detectNetworkStatus; //a switch for Detect Network Status Feature
 
         //UI
         BlurEffect blur = new BlurEffect();
@@ -162,7 +162,7 @@ namespace EasyCUSX
                 Process[] procs = Process.GetProcesses();
                 foreach (Process otherclient in procs)
                 {
-                    if (otherclient.ProcessName.Contains("PPPOELogin"))
+                    if (otherclient.ProcessName.ToLower().Contains("pppoelogin"))
                     {
                         otherclient.Kill();
                     }
