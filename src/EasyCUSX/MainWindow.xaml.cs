@@ -187,8 +187,7 @@ namespace EasyCUSX
             DisplayStateMsg("正在检查设备...");
             if (!d.CreateEntry("EasyCUSX", out Result))
             {
-                DisplayStateMsg(Result);
-                SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing);
+                SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
                 return;
             }
 
