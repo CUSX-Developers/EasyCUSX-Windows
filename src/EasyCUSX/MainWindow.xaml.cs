@@ -18,8 +18,6 @@ namespace EasyCUSX
     /// </summary>
     public partial class MainWindow : Window
     {
-
-
         #region init
         string ProgramName = "易·山传 2.0";
         string version = "b20151129";
@@ -155,7 +153,7 @@ namespace EasyCUSX
                         //HeartBeat packet
                         SendSocketAuth(pppoeusername, out Result);
                     }
-                    
+
                 }
 
                 if (WANconnected && detectNetworkStatus) //检测校园网络波动
@@ -351,7 +349,7 @@ namespace EasyCUSX
             });
             temp.IsBackground = true;
             temp.Start();
-            
+
         }
         #endregion
 
