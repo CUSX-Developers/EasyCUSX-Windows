@@ -20,7 +20,7 @@ namespace EasyCUSX
 
 
         #region init
-
+        string ProgramName = "易·山传 2.0";
         string version = "b20151129";
 
         //网络
@@ -87,13 +87,13 @@ namespace EasyCUSX
             KickOtherClient();
 
             //载入托盘图标
-            notify.Text = "易·山传 OpenSource";
+            notify.Text = ProgramName;
             notify.Icon = Properties.Resources.icon;
             notify.Visible = true;
             notify.Click += notify_Click;
 
             //载入版本号
-            Label_version.Content += "\r\n" + version;
+            Label_version.Content = ProgramName + " " + version;
 
             //载入设置到UI
             LoadConfig();
