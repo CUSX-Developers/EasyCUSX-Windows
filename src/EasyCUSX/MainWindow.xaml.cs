@@ -145,6 +145,12 @@ namespace EasyCUSX
                         SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, "网络已断开");
                         NotifyPopUp("有线网络已经断开", NotifyPopMsgFlag.Error);
                     }
+                    else
+                    {
+                        //HeartBeat packet
+                        SendSocketAuth(pppoeusername, out Result);
+                    }
+                    
                 }
 
                 if (WANconnected && detectNetworkStatus) //检测校园网络波动
