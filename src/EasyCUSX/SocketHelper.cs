@@ -71,7 +71,6 @@ namespace SocketHelper
         public void SocketClose()
         {
             s.Close();
-            s.Dispose();
         }
     }
 }

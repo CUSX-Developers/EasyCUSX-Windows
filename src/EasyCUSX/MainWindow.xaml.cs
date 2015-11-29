@@ -342,10 +342,6 @@ namespace EasyCUSX
                 {
                     NotifyPopUp("检查更新失败", NotifyPopMsgFlag.Error);
                 }
-                else
-                {
-                    NotifyPopUp("没有新版本", NotifyPopMsgFlag.Error);
-                }
             });
             temp.IsBackground = true;
             temp.Start();
