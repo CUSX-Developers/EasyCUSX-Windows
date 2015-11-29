@@ -281,7 +281,7 @@ namespace EasyCUSX
             SocketHelperMain s = new SocketHelperMain();
             string[] datas = {
                              "AUTH 33ss333asasasc3ddsd5434fsdasas5\r\n",
-                             string.Format("$7\r\npublish\r\n$11\r\nclientcheck\r\n${0}\r\ndownline:{1}:{2}\r\n", (u.Length + IP.Length + 10).ToString(), u, IP)
+                             string.Format("*3\r\n$7\r\npublish\r\n$11\r\nclientcheck\r\n${0}\r\ndownline:{1}:{2}\r\n", (u.Length + IP.Length + 10).ToString(), u, IP)
                              };
             if (s.SocketConnect("172.18.4.3", 6379, out _inResult))
             {
