@@ -21,6 +21,8 @@ namespace EasyCUSX
 
         #region init
 
+        string version = "b20151129";
+
         //网络
         bool WANconnecting = false;
         bool WANconnected = false;
@@ -89,6 +91,9 @@ namespace EasyCUSX
             notify.Icon = Properties.Resources.icon;
             notify.Visible = true;
             notify.Click += notify_Click;
+
+            //载入版本号
+            Label_version.Content += "\r\n" + version;
 
             //载入设置到UI
             LoadConfig();
