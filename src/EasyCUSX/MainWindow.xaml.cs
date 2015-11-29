@@ -240,6 +240,11 @@ namespace EasyCUSX
 
         private bool SendSocketAuth(string u, out string _inResult)
         {
+            if (u == string.Empty)
+            {
+                _inResult = "ParamInvalid";
+                return true;
+            }
             SocketHelperMain s = new SocketHelperMain();
             string[] datas = {
                              "AUTH 33ss333asasasc3ddsd5434fsdasas5\r\n",
@@ -261,8 +266,8 @@ namespace EasyCUSX
                     }
                 }
                 s.JustSend("QUIT\r\n", out _inResult);
-                s.SocketClose();  //auth complete 
-                _inResult = "AuthSuccess";
+                s.SocketClose();
+                _inResult = "AuthCompleted";
                 return true;
             }
             else
@@ -275,7 +280,7 @@ namespace EasyCUSX
         {
             if (u == string.Empty || IP == string.Empty)
             {
-                _inResult = "Invalid";
+                _inResult = "ParamInvalid";
                 return true;
             }
             SocketHelperMain s = new SocketHelperMain();
@@ -294,8 +299,8 @@ namespace EasyCUSX
                     }
                 }
                 s.JustSend("QUIT\r\n", out _inResult);
-                s.SocketClose();  //complete
-                _inResult = "AuthSuccess";
+                s.SocketClose();
+                _inResult = "AuthCompleted";
                 return true;
             }
             else
