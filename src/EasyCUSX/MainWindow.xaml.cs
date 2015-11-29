@@ -9,6 +9,7 @@ using System.Windows.Media.Effects;
 //Class
 using rasdialHelper;
 using SocketHelper;
+using UpdateHelper;
 
 namespace EasyCUSX
 {
@@ -39,6 +40,7 @@ namespace EasyCUSX
         //import class
         RasHelperMain d = new RasHelperMain();
         Ping ping = new Ping();
+        UpdaterMain updater = new UpdaterMain();
 
         //enums
         public enum WorkButtonFlag
@@ -83,6 +85,9 @@ namespace EasyCUSX
         //Program
         public void EasyCUSXInit()
         {
+            //清理自动更新文件
+            updater.CleanUp();
+
             //踢出其他客户端
             KickOtherClient();
 
@@ -227,6 +232,9 @@ namespace EasyCUSX
             SetCurrectWorkState(CurrectWorkStateFlag.Connected);
             Thread.Sleep(1000);
             SetWindowVisibility(false);
+
+            //检查更新
+            EasyCUSX_Update();
         }
 
         private void WANDisconnect()
@@ -315,6 +323,36 @@ namespace EasyCUSX
             }
         }
 
+        private void EasyCUSX_Update()
+        {
+            Thread temp = new Thread(() =>
+            {
+                UpdaterMain.CheckStatu status = updater.Check(version);
+                if (status == UpdaterMain.CheckStatu.newVersion)
+                {
+                    NotifyPopUp("发现了新版本，开始更新！", NotifyPopMsgFlag.Info);
+                    if (updater.Download())
+                    {
+                        NotifyPopUp("更新下载完成！下次启动易·山传时更新将完成", NotifyPopMsgFlag.Info);
+                    }
+                    else
+                    {
+                        NotifyPopUp("更新下载失败！", NotifyPopMsgFlag.Error);
+                    }
+                }
+                else if (status == UpdaterMain.CheckStatu.Failed)
+                {
+                    NotifyPopUp("检查更新失败", NotifyPopMsgFlag.Error);
+                }
+                else
+                {
+                    NotifyPopUp("没有新版本", NotifyPopMsgFlag.Error);
+                }
+            });
+            temp.IsBackground = true;
+            temp.Start();
+            
+        }
         #endregion
 
         #region UI
