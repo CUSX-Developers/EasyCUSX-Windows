@@ -1,8 +1,6 @@
 # EasyCUSX
 A Third-party PPPoE Client for CUSX school network
 
-**EasyCUSX offical version is praparing for getting back to ONLINE**
-
 # Introduction
 ### What is this
 Just as the short description, this is a basically PPPoE client with some extra certificate auth protocol for my school network.
