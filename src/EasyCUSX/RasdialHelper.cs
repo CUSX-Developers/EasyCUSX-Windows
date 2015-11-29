@@ -175,7 +175,6 @@ namespace rasdialHelper
                     return true;
                 }
 
-                string adds = string.Empty;
                 ReadOnlyCollection<RasDevice> readOnlyCollection = RasDevice.GetDevices();
                 //                foreach (var col in readOnlyCollection)
                 //                {
@@ -193,14 +192,10 @@ namespace rasdialHelper
                 resultMsg = "设备创建成功";
                 return true;
             }
-            catch (RasException ex)
-            {
-                resultMsg = ex.ErrorCode.ToString();
-                return false;
-            }
             catch (Exception ex)
             {
-                resultMsg = ex.ToString();
+                Console.WriteLine(ex.ToString());
+                resultMsg = "系统虚拟设备异常";
                 return false;
             }
 
