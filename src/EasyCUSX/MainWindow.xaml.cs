@@ -338,7 +338,7 @@ namespace EasyCUSX
                         NotifyPopUp("更新下载失败！", NotifyPopMsgFlag.Error);
                     }
                 }
-                else if (status == UpdaterMain.CheckStatu.Failed)
+                else
                 {
                     NotifyPopUp("检查更新失败", NotifyPopMsgFlag.Error);
                 }

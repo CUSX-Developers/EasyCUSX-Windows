@@ -5,7 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     xmlns:resx="clr-namespace:EasyCUSX.Properties" x:Name="MainWPFWindow"
     mc:Ignorable="d" x:Class="EasyCUSX.MainWindow"
-        Title="易·山传 OpenSource" Height="350" Width="550"
+        Title="易·山传 2.0" Height="350" Width="550"
         Style="{StaticResource WindowShadowStyle}" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" Topmost="True" Visibility="Visible" WindowStyle="None" Loaded="MainWPFWindow_Loaded" Background="#FFEBF2F9" Closing="MainWPFWindow_Closing" Icon="icon.ico" MouseDown="MainWPFWindow_MouseDown">
     <Grid>
         <Grid.ColumnDefinitions>
