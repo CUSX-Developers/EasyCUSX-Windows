@@ -1,5 +1,7 @@
-# EasyCUSX
+# EasyCUSX2
 A Third-party PPPoE Client for CUSX school network
+
+The second generation of EasyCUSX
 
 # Introduction
 ### What is this
