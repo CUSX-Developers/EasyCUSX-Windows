@@ -19,8 +19,8 @@ namespace EasyCUSX
     public partial class MainWindow : Window
     {
         #region init
-        string ProgramName = "易·山传 2.0";
-        string version = "b20151129.2";
+        string ProgramName = "易·山传";
+        string version = "2.0.7.2"; //Semver Standard
 
         //网络
         bool WANconnecting = false;
