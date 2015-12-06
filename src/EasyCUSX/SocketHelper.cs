@@ -79,7 +79,14 @@ namespace SocketHelper
                 bytes = s.Receive(RecvBytes, RecvBytes.Length, 0);
                 RecvStr = Encoding.ASCII.GetString(RecvBytes, 0, bytes);
                 Console.WriteLine("Recv: {0}", RecvStr);
-                return true;
+                if (bytes == 0)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
             }
             catch (Exception)
             {

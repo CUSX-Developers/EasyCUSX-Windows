@@ -40,6 +40,9 @@ namespace EasyCUSX
         Ping ping = new Ping();
         UpdaterMain updater = new UpdaterMain();
 
+        //HeartBeat Handle
+        Thread hbt;
+
         //enums
         public enum WorkButtonFlag
         {
@@ -95,15 +98,15 @@ namespace EasyCUSX
             notify.Visible = true;
             notify.Click += notify_Click;
 
-            //载入版本号
+            //载入版本号到UI
             Label_version.Content = ProgramName + " " + version;
 
-            //载入设置到UI
+            //载入当前设置状态到UI
             LoadConfig();
 
             //载入当前网络状态到UI并设置必要的状态参数
             SetCurrectWorkState(CurrectWorkStateFlag.Connecting);
-            DisplayStateMsg("检测网络状态...");
+            SetStateMsg("检测网络状态...");
 
             Thread temp = new Thread(() =>
             {
@@ -117,6 +120,16 @@ namespace EasyCUSX
                         pppoepassword = TextBox_Password.Password;
                         //设置是否检测网络波动
                         detectNetworkStatus = CheckBox_networkDetect.IsChecked.Value;
+
+                        //检查参数是否对auth有效
+                        if (!(pppoeusername != string.Empty && pppoepassword != string.Empty))
+                        {
+                            //无效时则表示用户已连接网络并第一次使用，断开连接防止心跳错误
+                            Thread tempT = new Thread(new ThreadStart(WANDisconnect));
+                            tempT.IsBackground = true;
+                            tempT.Start();
+                            return;
+                        }
                     }));
                     //设置UI
                     SetCurrectWorkState(CurrectWorkStateFlag.Connected);
@@ -138,34 +151,57 @@ namespace EasyCUSX
 
         private void NetworkCheckLoop()
         {
-            while (true)
+            try
             {
-                if (WANconnected) //检查有线校园网是否保持着连接
+                while (true)
                 {
-                    string Result;
-                    if (!d.CheckNetwork(out Result))
+                    if (WANconnected) //检查有线校园网是否保持着连接
                     {
-                        SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, "网络已断开");
-                        NotifyPopUp("有线网络已经断开", NotifyPopMsgFlag.Error);
+                        string Result;
+                        if (!d.CheckNetwork(out Result))
+                        {
+                            SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, "网络已断开");
+                            NotifyPopUp("有线网络已经断开", NotifyPopMsgFlag.Error);
+                        }
+                        else
+                        {
+                            //HeartBeat packet
+                            //SendSocketAuth(pppoeusername, out Result);
+                            if (hbt == null)
+                            {
+                                hbt = new Thread(() => HeartBeatHandler(true));
+                                hbt.IsBackground = true;
+                                hbt.Start();
+                            }
+                            else if (!hbt.IsAlive)
+                            {
+                                hbt = new Thread(() => HeartBeatHandler(true));
+                                hbt.IsBackground = true;
+                                hbt.Start();
+                                SetStateMsg("网络不稳定");
+                                NotifyPopUp("TCP测试未通过.\r\n校园网处于波动中...", NotifyPopMsgFlag.Warning);
+                            }
+                        }
                     }
                     else
                     {
-                        //HeartBeat packet
-                        SendSocketAuth(pppoeusername, out Result);
+                        shutdownHeartBeatThread();
                     }
 
-                }
-
-                if (WANconnected && detectNetworkStatus) //检测校园网络波动
-                {
-                    PingReply pingReply = ping.Send("172.18.4.3");
-                    if (pingReply.Status != IPStatus.Success)
+                    if (WANconnected && detectNetworkStatus) //检测校园网络波动
                     {
-                        DisplayStateMsg("网络不稳定");
-                        NotifyPopUp("校园网处于波动中...", NotifyPopMsgFlag.Warning);
+                        PingReply pingReply = ping.Send("172.18.4.3");
+                        if (pingReply.Status != IPStatus.Success)
+                        {
+                            SetStateMsg("网络不稳定");
+                            NotifyPopUp("ICMP测试未通过.\r\n校园网处于波动中...", NotifyPopMsgFlag.Warning);
+                        }
                     }
+                    Thread.Sleep(7000);
                 }
-                Thread.Sleep(7000);
+            }
+            catch (Exception)
+            {
             }
         }
 
@@ -198,7 +234,7 @@ namespace EasyCUSX
             Thread.Sleep(500);
 
             //创建Entry
-            DisplayStateMsg("正在检查设备...");
+            SetStateMsg("正在检查设备...");
             if (!d.CreateEntry("EasyCUSX", out Result))
             {
                 SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
@@ -206,7 +242,7 @@ namespace EasyCUSX
             }
 
             //开始拨号
-            DisplayStateMsg("正在连接中...");
+            SetStateMsg("正在连接中...");
             if (!d.DialUp(u, p, "EasyCUSX", out Result))
             {
                 SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
@@ -214,10 +250,10 @@ namespace EasyCUSX
             }
 
             //SocketAuth part
-            DisplayStateMsg("正在验证中...");
+            SetStateMsg("正在验证中...");
             if (!SendSocketAuth(u, out Result))
             {
-                DisplayStateMsg("正在重试...");
+                SetStateMsg("正在重试...");
                 //retry once
                 if (!SendSocketAuth(u, out Result))
                 {
@@ -228,26 +264,38 @@ namespace EasyCUSX
             }
 
             SetCurrectWorkState(CurrectWorkStateFlag.Connected);
+
             Thread.Sleep(1000);
             SetWindowVisibility(false);
 
+            Thread.Sleep(2000);
             //检查更新
             EasyCUSX_Update();
         }
 
         private void WANDisconnect()
         {
-            SetCurrectWorkState(CurrectWorkStateFlag.Disconnecting);
-            string Result;
-            SendDisconnectAuth(pppoeusername, d.getCurrentIP(), out Result);
-            if (d.HangUp("EasyCUSX", out Result))
+            try
             {
-                SetCurrectWorkState(CurrectWorkStateFlag.Idle);
+                SetCurrectWorkState(CurrectWorkStateFlag.Disconnecting);
+                shutdownHeartBeatThread();
+
+                string Result;
+                SendDisconnectAuth(pppoeusername, d.getCurrentIP(), out Result);
+
+                if (d.HangUp("EasyCUSX", out Result))
+                {
+                    SetCurrectWorkState(CurrectWorkStateFlag.Idle);
+                }
+                else
+                {
+                    SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
+                }
             }
-            else
+            catch (Exception)
             {
-                SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
             }
+
         }
 
         private bool SendSocketAuth(string u, out string _inResult)
@@ -277,14 +325,78 @@ namespace EasyCUSX
                         return false;
                     }
                 }
-                s.JustSend("QUIT\r\n", out _inResult);
-                s.SocketClose();
+                //s.JustSend("QUIT\r\n", out _inResult);
+                //s.SocketClose();
+
+                //go HeartBeat
+                hbt = new Thread(() => HeartBeatHandler(false, s));
+                hbt.IsBackground = true;
+                hbt.Start();
+
                 _inResult = "AuthCompleted";
                 return true;
             }
             else
             {
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// HeartBeat Thread Handler
+        /// </summary>
+        /// <param name="preAuth">set if pre auth is needed</param>
+        /// <param name="s">if pre auth is needed, than this is not needed.</param>
+        private void HeartBeatHandler(bool preAuth, SocketHelperMain s = null)
+        {
+            try
+            {
+                string _inResult;
+                if (preAuth)
+                {
+                    while (true)
+                    {
+                        if (SendSocketAuth(pppoeusername, out _inResult))
+                        {
+                            break;
+                        }
+                    }
+                    return;
+                }
+
+                while (true)
+                {
+                    string recvStr = "";
+                    if (s.JustRecv(out recvStr))
+                    {
+                        Console.WriteLine("HeartBeat Thread recieve:", recvStr);
+                    }
+                    else
+                    {
+                        Console.WriteLine("HeartBeat Thread Failed once time. Try to restart HeartBeat");
+                        break;
+                    }
+                }
+            }
+            catch (ThreadAbortException)
+            {
+                string _inResult;
+                s.JustSend("QUIT\r\n", out _inResult);
+                s.SocketClose();
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private void shutdownHeartBeatThread()
+        {
+            if (hbt != null)
+            {
+                if (hbt.IsAlive)
+                {
+                    hbt.Abort();
+                }
             }
         }
 
@@ -360,7 +472,7 @@ namespace EasyCUSX
                 case CurrectWorkStateFlag.Idle: //idle 0
                     SetBlurBackground(false);
                     SetStateMsgVisbility(false);
-                    DisplayStateMsg("Idle");
+                    SetStateMsg("Idle");
                     SetWorkButton(WorkButtonFlag.NoFunction);
                     WANconnecting = false;
                     WANconnected = false;
@@ -369,7 +481,7 @@ namespace EasyCUSX
                 case CurrectWorkStateFlag.Connecting: //connecting 1
                     SetBlurBackground(true);
                     SetStateMsgVisbility(true);
-                    DisplayStateMsg("正在连接中");
+                    SetStateMsg("正在连接中");
                     SetWorkButton(WorkButtonFlag.NoFunction);
                     WANconnecting = true;
                     WANconnected = false;
@@ -378,7 +490,7 @@ namespace EasyCUSX
                 case CurrectWorkStateFlag.Connected: //connected 2
                     SetBlurBackground(true);
                     SetStateMsgVisbility(true);
-                    DisplayStateMsg("网络已连接");
+                    SetStateMsg("网络已连接");
                     SetWorkButton(WorkButtonFlag.Disconnect);
                     WANconnecting = false;
                     WANconnected = true;
@@ -386,7 +498,7 @@ namespace EasyCUSX
                 case CurrectWorkStateFlag.ErrorMsgShowing: //errorMsgShowing 3
                     SetBlurBackground(true);
                     SetStateMsgVisbility(true);
-                    DisplayStateMsg(ErrorMsg);
+                    SetStateMsg(ErrorMsg);
                     SetWorkButton(WorkButtonFlag.Back);
                     WANconnecting = false;
                     WANconnected = false;
@@ -394,7 +506,7 @@ namespace EasyCUSX
                 case CurrectWorkStateFlag.Disconnecting: //disconnecting 4
                     SetBlurBackground(true);
                     SetStateMsgVisbility(true);
-                    DisplayStateMsg("正在断开中");
+                    SetStateMsg("正在断开中");
                     SetWorkButton(WorkButtonFlag.NoFunction);
                     WANconnecting = false;
                     WANconnected = false;
@@ -483,7 +595,7 @@ namespace EasyCUSX
             }));
         }
 
-        private void DisplayStateMsg(string msg)
+        private void SetStateMsg(string msg)
         {
             this.Dispatcher.Invoke(new Action(() =>
             {
