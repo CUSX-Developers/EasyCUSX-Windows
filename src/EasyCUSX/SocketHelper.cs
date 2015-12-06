@@ -68,6 +68,25 @@ namespace SocketHelper
             }
         }
 
+        public bool JustRecv(out string RecvStr)
+        {
+            Console.WriteLine("Waiting for Recv...");
+            try
+            {
+                byte[] RecvBytes = new byte[1024];
+                int bytes = 0;
+                bytes = s.Receive(RecvBytes, RecvBytes.Length, 0);
+                RecvStr = Encoding.ASCII.GetString(RecvBytes, 0, bytes);
+                Console.WriteLine("Recv: {0}", RecvStr);
+                return true;
+            }
+            catch (Exception)
+            {
+                RecvStr = "Something went wrong";
+                return false;
+            }
+        }
+
         public void SocketClose()
         {
             s.Close();
