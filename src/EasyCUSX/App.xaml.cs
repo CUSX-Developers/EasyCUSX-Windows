@@ -22,11 +22,18 @@ namespace EasyCUSX
             {
                 var application = new App();
                 application.InitializeComponent();
+                application.DispatcherUnhandledException += application_DispatcherUnhandledException;
                 application.Run();
 
                 // Allow single instance code to perform cleanup operations
                 SingleInstance<App>.Cleanup();
             }
+        }
+
+        static void application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            MessageBox.Show("get a exception.");
+            e.Handled = true;
         }
 
         #region ISingleInstanceApp Members
