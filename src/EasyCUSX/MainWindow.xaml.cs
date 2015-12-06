@@ -20,7 +20,7 @@ namespace EasyCUSX
     {
         #region init
         string ProgramName = "易·山传";
-        string version = "2.0.7.2"; //Semver Standard
+        string version = "2.0.7.3"; //Semver Standard
 
         //网络
         bool WANconnecting = false;
@@ -391,13 +391,20 @@ namespace EasyCUSX
 
         private void shutdownHeartBeatThread()
         {
-            if (hbt != null)
+            try
             {
-                if (hbt.IsAlive)
+                if (hbt != null)
                 {
-                    hbt.Abort();
+                    if (hbt.IsAlive)
+                    {
+                        hbt.Abort();
+                    }
                 }
             }
+            catch (Exception)
+            {
+            }
+            
         }
 
         private bool SendDisconnectAuth(string u, string IP, out string _inResult)

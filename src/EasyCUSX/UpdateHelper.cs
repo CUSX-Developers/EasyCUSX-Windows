@@ -17,9 +17,9 @@ namespace UpdateHelper
 
         public CheckStatu Check(string _currentVersion)
         {
-            WebClient client = new WebClient();
             try
             {
+                WebClient client = new WebClient();
                 string RecvStr = Encoding.ASCII.GetString(client.DownloadData("http://api.cusx.net/EasyCUSX/get.php?ver=pc&req=version"));
                 client.Dispose();
                 if (_currentVersion == RecvStr)

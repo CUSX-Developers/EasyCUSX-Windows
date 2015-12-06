@@ -32,7 +32,7 @@ namespace EasyCUSX
 
         static void application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
-            MessageBox.Show("get a exception.");
+            MessageBox.Show("发生了一个严重错误，易山传将尝试继续工作\r\n但仍建议您重新打开易山传以避免一些未知问题.");
             e.Handled = true;
         }
 
