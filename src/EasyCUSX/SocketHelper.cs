@@ -17,6 +17,7 @@ namespace SocketHelper
             try
             {
                 s.Connect(ipe);
+                s.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
                 Result = "连接成功";
                 Console.WriteLine("Connected: {0}:{1}", IP, Port.ToString());
                 return true;
