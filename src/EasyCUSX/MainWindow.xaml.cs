@@ -20,7 +20,7 @@ namespace EasyCUSX
     {
         #region init
         string ProgramName = "易·山传";
-        string version = "2.0.7.3"; //Semver Standard
+        string version = "2.0.8";
 
         //网络
         bool WANconnecting = false;
