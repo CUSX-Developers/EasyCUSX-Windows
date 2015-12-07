@@ -30,6 +30,7 @@ namespace EasyCUSX
 
         bool detectNetworkStatus; //a switch for Detect Network Status Feature
         bool UpdateChecked = false;
+        bool UpdateChecking = false;
 
         //UI
         BlurEffect blur = new BlurEffect();
@@ -452,10 +453,11 @@ namespace EasyCUSX
 
         private void EasyCUSX_Update()
         {
-            if (UpdateChecked)
+            if (UpdateChecked || UpdateChecking)
             {
                 return;
             }
+            UpdateChecking = true;
             Thread temp = new Thread(() =>
             {
                 UpdaterMain.CheckStatu status = updater.Check(version);
@@ -474,13 +476,17 @@ namespace EasyCUSX
                 }
                 else if (status == UpdaterMain.CheckStatu.noNewVersion)
                 {
+                    Console.WriteLine("No New Version");
                     //NotifyPopUp("未发现新版本", NotifyPopMsgFlag.Error);
                     UpdateChecked = true;
                 }
                 else
                 {
+                    Console.WriteLine("Check Update Failed");
                     //NotifyPopUp("检查更新失败", NotifyPopMsgFlag.Error);
                 }
+
+                UpdateChecking = false;
             });
             temp.IsBackground = true;
             temp.Start();
