@@ -178,8 +178,12 @@ namespace EasyCUSX
                                 hbt = new Thread(() => HeartBeatHandler(true));
                                 hbt.IsBackground = true;
                                 hbt.Start();
-                                SetStateMsg("网络不稳定");
-                                NotifyPopUp("TCP测试未通过.\r\n校园网处于波动中...", NotifyPopMsgFlag.Warning);
+                                if (detectNetworkStatus)
+                                {
+                                    SetStateMsg("网络不稳定");
+                                    NotifyPopUp("TCP测试未通过.\r\n校园网处于波动中...", NotifyPopMsgFlag.Warning);
+                                }
+                                
                             }
                         }
                     }
@@ -404,7 +408,7 @@ namespace EasyCUSX
             catch (Exception)
             {
             }
-            
+
         }
 
         private bool SendDisconnectAuth(string u, string IP, out string _inResult)
