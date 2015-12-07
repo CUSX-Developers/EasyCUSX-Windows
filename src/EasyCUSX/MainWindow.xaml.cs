@@ -29,6 +29,7 @@ namespace EasyCUSX
         string pppoepassword;
 
         bool detectNetworkStatus; //a switch for Detect Network Status Feature
+        bool UpdateChecked = false;
 
         //UI
         BlurEffect blur = new BlurEffect();
@@ -181,7 +182,7 @@ namespace EasyCUSX
                                 if (detectNetworkStatus)
                                 {
                                     SetStateMsg("网络不稳定");
-                                    NotifyPopUp("TCP测试未通过.\r\n校园网处于波动中...", NotifyPopMsgFlag.Warning);
+                                    NotifyPopUp("校园网处于波动中...(TCP)", NotifyPopMsgFlag.Warning);
                                 }
                                 
                             }
@@ -198,8 +199,13 @@ namespace EasyCUSX
                         if (pingReply.Status != IPStatus.Success)
                         {
                             SetStateMsg("网络不稳定");
-                            NotifyPopUp("ICMP测试未通过.\r\n校园网处于波动中...", NotifyPopMsgFlag.Warning);
+                            NotifyPopUp("校园网处于波动中...(ICMP)", NotifyPopMsgFlag.Warning);
                         }
+                    }
+
+                    if (!UpdateChecked)
+                    {
+                        EasyCUSX_Update();
                     }
                     Thread.Sleep(7000);
                 }
@@ -446,11 +452,16 @@ namespace EasyCUSX
 
         private void EasyCUSX_Update()
         {
+            if (UpdateChecked)
+            {
+                return;
+            }
             Thread temp = new Thread(() =>
             {
                 UpdaterMain.CheckStatu status = updater.Check(version);
                 if (status == UpdaterMain.CheckStatu.newVersion)
                 {
+                    UpdateChecked = true;
                     NotifyPopUp("发现了新版本，开始更新！", NotifyPopMsgFlag.Info);
                     if (updater.Download())
                     {
@@ -461,9 +472,14 @@ namespace EasyCUSX
                         NotifyPopUp("更新下载失败！", NotifyPopMsgFlag.Error);
                     }
                 }
+                else if (status == UpdaterMain.CheckStatu.noNewVersion)
+                {
+                    //NotifyPopUp("未发现新版本", NotifyPopMsgFlag.Error);
+                    UpdateChecked = true;
+                }
                 else
                 {
-                    NotifyPopUp("检查更新失败", NotifyPopMsgFlag.Error);
+                    //NotifyPopUp("检查更新失败", NotifyPopMsgFlag.Error);
                 }
             });
             temp.IsBackground = true;
