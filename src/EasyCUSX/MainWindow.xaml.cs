@@ -184,7 +184,7 @@ namespace EasyCUSX
                                     SetStateMsg("网络不稳定");
                                     NotifyPopUp("校园网处于波动中...(TCP)", NotifyPopMsgFlag.Warning);
                                 }
-                                
+
                             }
                         }
                     }
