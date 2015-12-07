@@ -20,7 +20,7 @@ namespace UpdateHelper
             try
             {
                 WebClient client = new WebClient();
-                string RecvStr = Encoding.ASCII.GetString(client.DownloadData("http://api.cusx.net/EasyCUSX/get.php?ver=pc&req=version"));
+                string RecvStr = Encoding.ASCII.GetString(client.DownloadData("http://api.cusx.net/v1/get.php?appname=easycusx_win&request=version"));
                 client.Dispose();
                 if (_currentVersion == RecvStr)
                 {
@@ -45,7 +45,7 @@ namespace UpdateHelper
                 try
                 {
                     WebClient client = new WebClient();
-                    string newlink = Encoding.ASCII.GetString(client.DownloadData("http://api.cusx.net/EasyCUSX/get.php?ver=pc&req=link"));
+                    string newlink = Encoding.ASCII.GetString(client.DownloadData("http://api.cusx.net/v1/get.php?appname=easycusx_win&request=downloadlink"));
                     client.DownloadFile(newlink, Application.StartupPath + @"\EasyCUSX.exe");
                     client.Dispose();
                     return true;
