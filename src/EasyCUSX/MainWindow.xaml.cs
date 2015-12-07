@@ -392,8 +392,11 @@ namespace EasyCUSX
             catch (ThreadAbortException)
             {
                 string _inResult;
-                s.JustSend("QUIT\r\n", out _inResult);
-                s.SocketClose();
+                if (s != null)
+                {
+                    s.JustSend("QUIT\r\n", out _inResult);
+                    s.SocketClose();
+                }
             }
             catch (Exception)
             {
