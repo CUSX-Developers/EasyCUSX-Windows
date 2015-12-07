@@ -23,6 +23,7 @@ namespace EasyCUSX
                 var application = new App();
                 application.InitializeComponent();
                 application.DispatcherUnhandledException += application_DispatcherUnhandledException;
+                AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
                 application.Run();
 
                 // Allow single instance code to perform cleanup operations
@@ -30,9 +31,14 @@ namespace EasyCUSX
             }
         }
 
+        static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            MessageBox.Show("易·山传在运行过程中发生了一个严重错误，程序将尝试忽略这个错误并继续工作\r\n但仍建议您重新打开易·山传以避免一些未知的问题.\r\n希望您能将下面的错误信息报告给开发者以帮助解决这个问题，不胜感激！反馈QQ群：512985336\r\n错误堆栈：" + e.ExceptionObject.ToString());
+        }
+
         static void application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
-            MessageBox.Show("发生了一个严重错误，易山传将尝试继续工作\r\n但仍建议您重新打开易山传以避免一些未知问题.");
+            MessageBox.Show("易·山传在运行过程中发生了一个严重错误，程序将尝试忽略这个错误并继续工作\r\n但仍建议您重新打开易·山传以避免一些未知的问题.\r\n希望您能将下面的错误信息报告给开发者以帮助解决这个问题，不胜感激！反馈QQ群：512985336\r\n错误堆栈：" + e.Exception.ToString());
             e.Handled = true;
         }
 
