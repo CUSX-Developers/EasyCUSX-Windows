@@ -204,7 +204,7 @@ namespace EasyCUSX
                         }
                     }
 
-                    if (!UpdateChecked)
+                    if (!UpdateChecked && WANconnected)
                     {
                         EasyCUSX_Update();
                     }
@@ -380,17 +380,18 @@ namespace EasyCUSX
                     string recvStr = "";
                     if (s.JustRecv(out recvStr))
                     {
-                        Console.WriteLine("HeartBeat Thread recieve:", recvStr);
+                        Console.WriteLine("HeartBeat recieve:", recvStr);
                     }
                     else
                     {
-                        Console.WriteLine("HeartBeat Thread Failed once time. Try to restart HeartBeat");
+                        Console.WriteLine("HeartBeat Failed once time. Try to restart HeartBeat");
                         break;
                     }
                 }
             }
             catch (ThreadAbortException)
             {
+                Console.WriteLine("HeartBeat Thread recvive Abort signal");
                 string _inResult;
                 if (s != null)
                 {
