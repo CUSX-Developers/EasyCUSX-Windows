@@ -140,9 +140,9 @@ namespace rasdialHelper
                 p.StartInfo.RedirectStandardError = true;
                 p.StartInfo.CreateNoWindow = true;
                 p.Start();
-                p.StandardInput.WriteLine("rasdial {0} /DISCONNECT", _EntryName);
-                p.StandardInput.WriteLine("rasdial PPPOE /DISCONNECT");
-                p.StandardInput.WriteLine("rasdial /DISCONNECT");
+                p.StandardInput.WriteLine(Environment.SystemDirectory + @"\rasdial.exe {0} /DISCONNECT", _EntryName);
+                p.StandardInput.WriteLine(Environment.SystemDirectory + @"\rasdial.exe PPPOE /DISCONNECT");
+                p.StandardInput.WriteLine(Environment.SystemDirectory + @"\rasdial.exe /DISCONNECT");
                 p.StandardInput.WriteLine("exit");
                 string strRst = p.StandardOutput.ReadToEnd();
                 _ResultMsg = "成功";
@@ -241,7 +241,7 @@ namespace rasdialHelper
                 p.StartInfo.RedirectStandardError = true;
                 p.StartInfo.CreateNoWindow = true;
                 p.Start();
-                p.StandardInput.WriteLine("rasdial");
+                p.StandardInput.WriteLine(Environment.SystemDirectory + @"\rasdial.exe");
                 p.StandardInput.WriteLine("exit");
                 string strRst = p.StandardOutput.ReadToEnd();
                 strRst = strRst.Replace(Environment.CurrentDirectory, "2333333");
