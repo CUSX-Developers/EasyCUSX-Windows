@@ -20,7 +20,7 @@ namespace EasyCUSX
     {
         #region init
         string ProgramName = "易·山传";
-        string version = "2.0.8";
+        string version = "2.0.9";
 
         //网络
         bool WANconnecting = false;
