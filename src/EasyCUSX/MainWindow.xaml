@@ -56,6 +56,7 @@
             <Button x:Name="CloseButton" Grid.Column="1" HorizontalAlignment="Left" Margin="350,0,0,0" VerticalAlignment="Top" Style="{DynamicResource CloseButton}" Click="CloseButton_Click">
                 <Path Data="M50,25 L25,50 M25,25 50,50" Style="{DynamicResource close_x_string}"/>
             </Button>
+            <TextBlock Margin="122,300.4,121.533,0" TextWrapping="Wrap" Text="用户交流群 512985336" VerticalAlignment="Top"/>
         </Grid>
         <Grid Grid.Column="1" Height="330" Margin="0,0,-187,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="187">
             <Border x:Name="ExpandedBorder" CornerRadius="0" Height="330" Width="1" Background="Black" Margin="0,0,186,0" Visibility="Hidden"/>

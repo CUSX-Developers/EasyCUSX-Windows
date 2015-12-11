@@ -8,7 +8,8 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Shell {
+namespace Microsoft.Shell
+{
     using System;
     using System.Collections;
     using System.Collections.Generic;
@@ -25,7 +26,8 @@ namespace Microsoft.Shell {
     using System.Runtime.InteropServices;
     using System.ComponentModel;
 
-    internal enum WM {
+    internal enum WM
+    {
         NULL = 0x0000,
         CREATE = 0x0001,
         DESTROY = 0x0002,
@@ -142,7 +144,8 @@ namespace Microsoft.Shell {
     }
 
     [SuppressUnmanagedCodeSecurity]
-    internal static class NativeMethods {
+    internal static class NativeMethods
+    {
         /// <summary>
         /// Delegate declaration that matches WndProc signatures.
         /// </summary>
@@ -156,24 +159,30 @@ namespace Microsoft.Shell {
         private static extern IntPtr _LocalFree(IntPtr hMem);
 
 
-        public static string[] CommandLineToArgvW(string cmdLine) {
+        public static string[] CommandLineToArgvW(string cmdLine)
+        {
             IntPtr argv = IntPtr.Zero;
-            try {
+            try
+            {
                 int numArgs = 0;
 
                 argv = _CommandLineToArgvW(cmdLine, out numArgs);
-                if (argv == IntPtr.Zero) {
+                if (argv == IntPtr.Zero)
+                {
                     throw new Win32Exception();
                 }
                 var result = new string[numArgs];
 
-                for (int i = 0; i < numArgs; i++) {
+                for (int i = 0; i < numArgs; i++)
+                {
                     IntPtr currArg = Marshal.ReadIntPtr(argv, i * Marshal.SizeOf(typeof(IntPtr)));
                     result[i] = Marshal.PtrToStringUni(currArg);
                 }
 
                 return result;
-            } finally {
+            }
+            finally
+            {
 
                 IntPtr p = _LocalFree(argv);
                 // Otherwise LocalFree failed.
@@ -183,7 +192,8 @@ namespace Microsoft.Shell {
 
     }
 
-    public interface ISingleInstanceApp {
+    public interface ISingleInstanceApp
+    {
         bool SignalExternalCommandLineArgs(IList<string> args);
     }
 
@@ -199,7 +209,8 @@ namespace Microsoft.Shell {
     /// For most apps, this will not be much of an issue.
     /// </remarks>
     public static class SingleInstance<TApplication>
-                where TApplication : Application, ISingleInstanceApp {
+                where TApplication : Application, ISingleInstanceApp
+    {
         #region Private Fields
 
         /// <summary>
@@ -244,7 +255,8 @@ namespace Microsoft.Shell {
         /// <summary>
         /// Gets list of command line arguments for the application.
         /// </summary>
-        public static IList<string> CommandLineArgs {
+        public static IList<string> CommandLineArgs
+        {
             get { return commandLineArgs; }
         }
 
@@ -257,7 +269,8 @@ namespace Microsoft.Shell {
         /// If not, activates the first instance.
         /// </summary>
         /// <returns>True if this is the first instance of the application.</returns>
-        public static bool InitializeAsFirstInstance(string uniqueName) {
+        public static bool InitializeAsFirstInstance(string uniqueName)
+        {
             commandLineArgs = GetCommandLineArgs(uniqueName);
 
             // Build unique application Id and the IPC channel name.
@@ -268,9 +281,12 @@ namespace Microsoft.Shell {
             // Create mutex based on unique application Id to check if this is the first instance of the application. 
             bool firstInstance;
             singleInstanceMutex = new Mutex(true, applicationIdentifier, out firstInstance);
-            if (firstInstance) {
+            if (firstInstance)
+            {
                 CreateRemoteService(channelName);
-            } else {
+            }
+            else
+            {
                 SignalFirstInstance(channelName, commandLineArgs);
             }
 
@@ -280,13 +296,16 @@ namespace Microsoft.Shell {
         /// <summary>
         /// Cleans up single-instance code, clearing shared resources, mutexes, etc.
         /// </summary>
-        public static void Cleanup() {
-            if (singleInstanceMutex != null) {
+        public static void Cleanup()
+        {
+            if (singleInstanceMutex != null)
+            {
                 singleInstanceMutex.Close();
                 singleInstanceMutex = null;
             }
 
-            if (channel != null) {
+            if (channel != null)
+            {
                 ChannelServices.UnregisterChannel(channel);
                 channel = null;
             }
@@ -300,12 +319,16 @@ namespace Microsoft.Shell {
         /// Gets command line args - for ClickOnce deployed applications, command line args may not be passed directly, they have to be retrieved.
         /// </summary>
         /// <returns>List of command line arg strings.</returns>
-        private static IList<string> GetCommandLineArgs(string uniqueApplicationName) {
+        private static IList<string> GetCommandLineArgs(string uniqueApplicationName)
+        {
             string[] args = null;
-            if (AppDomain.CurrentDomain.ActivationContext == null) {
+            if (AppDomain.CurrentDomain.ActivationContext == null)
+            {
                 // The application was not clickonce deployed, get args from standard API's
                 args = Environment.GetCommandLineArgs();
-            } else {
+            }
+            else
+            {
                 // The application was clickonce deployed
                 // Clickonce deployed apps cannot recieve traditional commandline arguments
                 // As a workaround commandline arguments can be written to a shared location before 
@@ -315,19 +338,25 @@ namespace Microsoft.Shell {
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), uniqueApplicationName);
 
                 string cmdLinePath = Path.Combine(appFolderPath, "cmdline.txt");
-                if (File.Exists(cmdLinePath)) {
-                    try {
-                        using (TextReader reader = new StreamReader(cmdLinePath, System.Text.Encoding.Unicode)) {
+                if (File.Exists(cmdLinePath))
+                {
+                    try
+                    {
+                        using (TextReader reader = new StreamReader(cmdLinePath, System.Text.Encoding.Unicode))
+                        {
                             args = NativeMethods.CommandLineToArgvW(reader.ReadToEnd());
                         }
 
                         File.Delete(cmdLinePath);
-                    } catch (IOException) {
+                    }
+                    catch (IOException)
+                    {
                     }
                 }
             }
 
-            if (args == null) {
+            if (args == null)
+            {
                 args = new string[] { };
             }
 
@@ -338,7 +367,8 @@ namespace Microsoft.Shell {
         /// Creates a remote service for communication.
         /// </summary>
         /// <param name="channelName">Application's IPC channel name.</param>
-        private static void CreateRemoteService(string channelName) {
+        private static void CreateRemoteService(string channelName)
+        {
             BinaryServerFormatterSinkProvider serverProvider = new BinaryServerFormatterSinkProvider();
             serverProvider.TypeFilterLevel = TypeFilterLevel.Full;
             IDictionary props = new Dictionary<string, string>();
@@ -367,7 +397,8 @@ namespace Microsoft.Shell {
         /// <param name="args">
         /// Command line arguments for the second instance, passed to the first instance to take appropriate action.
         /// </param>
-        private static void SignalFirstInstance(string channelName, IList<string> args) {
+        private static void SignalFirstInstance(string channelName, IList<string> args)
+        {
             IpcClientChannel secondInstanceChannel = new IpcClientChannel();
             ChannelServices.RegisterChannel(secondInstanceChannel, true);
 
@@ -378,7 +409,8 @@ namespace Microsoft.Shell {
 
             // Check that the remote service exists, in some cases the first instance may not yet have created one, in which case
             // the second instance should just exit
-            if (firstInstanceRemoteServiceReference != null) {
+            if (firstInstanceRemoteServiceReference != null)
+            {
                 // Invoke a method of the remote service exposed by the first instance passing on the command line
                 // arguments and causing the first instance to activate itself
                 firstInstanceRemoteServiceReference.InvokeFirstInstance(args);
@@ -390,7 +422,8 @@ namespace Microsoft.Shell {
         /// </summary>
         /// <param name="arg">Callback argument.</param>
         /// <returns>Always null.</returns>
-        private static object ActivateFirstInstanceCallback(object arg) {
+        private static object ActivateFirstInstanceCallback(object arg)
+        {
             // Get command line args to be passed to first instance
             IList<string> args = arg as IList<string>;
             ActivateFirstInstance(args);
@@ -401,9 +434,11 @@ namespace Microsoft.Shell {
         /// Activates the first instance of the application with arguments from a second instance.
         /// </summary>
         /// <param name="args">List of arguments to supply the first instance of the application.</param>
-        private static void ActivateFirstInstance(IList<string> args) {
+        private static void ActivateFirstInstance(IList<string> args)
+        {
             // Set main window state and process command line args
-            if (Application.Current == null) {
+            if (Application.Current == null)
+            {
                 return;
             }
 
@@ -418,13 +453,16 @@ namespace Microsoft.Shell {
         /// Remoting service class which is exposed by the server i.e the first instance and called by the second instance
         /// to pass on the command line arguments to the first instance and cause it to activate itself.
         /// </summary>
-        private class IPCRemoteService : MarshalByRefObject {
+        private class IPCRemoteService : MarshalByRefObject
+        {
             /// <summary>
             /// Activates the first instance of the application.
             /// </summary>
             /// <param name="args">List of arguments to pass to the first instance.</param>
-            public void InvokeFirstInstance(IList<string> args) {
-                if (Application.Current != null) {
+            public void InvokeFirstInstance(IList<string> args)
+            {
+                if (Application.Current != null)
+                {
                     // Do an asynchronous call to ActivateFirstInstance function
                     Application.Current.Dispatcher.BeginInvoke(
                         DispatcherPriority.Normal, new DispatcherOperationCallback(SingleInstance<TApplication>.ActivateFirstInstanceCallback), args);
@@ -436,7 +474,8 @@ namespace Microsoft.Shell {
             /// to ensure that lease never expires.
             /// </summary>
             /// <returns>Always null.</returns>
-            public override object InitializeLifetimeService() {
+            public override object InitializeLifetimeService()
+            {
                 return null;
             }
         }
