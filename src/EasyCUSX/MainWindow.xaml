@@ -26,7 +26,8 @@
             <PasswordBox x:Name="TextBox_Password" Margin="65,169,48,0" VerticalContentAlignment="Center" VerticalAlignment="Top" AllowDrop="False" BorderThickness="0,0,0,1" Height="25" Width="267" BorderBrush="#FF09A3DC" Background="#FFEBF2F9"/>
 
             <!--LoginButton-->
-            <Button x:Name="LoginButton" Content="登 录" Margin="39,239.94,39,50" Style="{DynamicResource BlueButton}" IsDefault="True" Width="302" Click="LoginButton_Click"/>
+            <Button x:Name="LoginButton" Content="登录有线" Margin="39,239.94,193,50" Style="{DynamicResource BlueButton}" IsDefault="True" Click="LoginButton_Click"/>
+            <Button x:Name="WLANLoginButton" Content="登录无线(Beta)" Margin="193,239.94,39,50" Style="{DynamicResource BlueButton}" IsDefault="True" Click="LoginButton_Click"/>
 
             <!--TopBanner-->
             <Border Margin="39,42.563,39,227.437" BorderThickness="0" BorderBrush="Black" Width="302" Height="60" >
