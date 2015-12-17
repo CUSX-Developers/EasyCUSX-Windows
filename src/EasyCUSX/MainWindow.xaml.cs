@@ -28,7 +28,6 @@ namespace EasyCUSX
         string pppoeusername;
         string pppoepassword;
 
-        bool detectNetworkStatus; //a switch for Detect Network Status Feature
         bool UpdateChecked = false;
         bool UpdateChecking = false;
 
@@ -39,7 +38,6 @@ namespace EasyCUSX
 
         //import class
         RasHelperMain d = new RasHelperMain();
-        Ping ping = new Ping();
         UpdaterMain updater = new UpdaterMain();
 
         //HeartBeat Handle
@@ -120,8 +118,6 @@ namespace EasyCUSX
                         //Set for disconnect process
                         pppoeusername = TextBox_Username.Text;
                         pppoepassword = TextBox_Password.Password;
-                        //设置是否检测网络波动
-                        detectNetworkStatus = CheckBox_networkDetect.IsChecked.Value;
 
                         //检查参数是否对auth有效
                         if (!(pppoeusername != string.Empty && pppoepassword != string.Empty))
@@ -180,28 +176,12 @@ namespace EasyCUSX
                                 hbt = new Thread(() => HeartBeatHandler(true));
                                 hbt.IsBackground = true;
                                 hbt.Start();
-                                if (detectNetworkStatus)
-                                {
-                                    SetStateMsg("网络不稳定");
-                                    NotifyPopUp("校园网处于波动中...(TCP)", NotifyPopMsgFlag.Warning);
-                                }
-
                             }
                         }
                     }
                     else
                     {
                         shutdownHeartBeatThread();
-                    }
-
-                    if (WANconnected && detectNetworkStatus) //检测校园网络波动
-                    {
-                        PingReply pingReply = ping.Send("172.18.4.3");
-                        if (pingReply.Status != IPStatus.Success)
-                        {
-                            SetStateMsg("网络不稳定");
-                            NotifyPopUp("校园网处于波动中...(ICMP)", NotifyPopMsgFlag.Warning);
-                        }
                     }
 
                     if (!UpdateChecked && WANconnected)
@@ -717,8 +697,6 @@ namespace EasyCUSX
             //Set for disconnect
             pppoeusername = TextBox_Username.Text;
             pppoepassword = TextBox_Password.Password;
-            //设置是否检测网络波动
-            detectNetworkStatus = CheckBox_networkDetect.IsChecked.Value;
             //开始拨号
             Thread t = new Thread(() => WANConnect(pppoeusername, pppoepassword));
             t.IsBackground = true;
@@ -787,7 +765,6 @@ namespace EasyCUSX
                 Properties.Settings.Default.password = "";
             }
             Properties.Settings.Default.REMpass = CheckBox_REMpass.IsChecked.Value;
-            Properties.Settings.Default.NetworkDetect = CheckBox_networkDetect.IsChecked.Value;
             Properties.Settings.Default.Save();
         }
 
@@ -796,7 +773,6 @@ namespace EasyCUSX
             TextBox_Username.Text = Properties.Settings.Default.username;
             TextBox_Password.Password = Properties.Settings.Default.password;
             CheckBox_REMpass.IsChecked = Properties.Settings.Default.REMpass;
-            CheckBox_networkDetect.IsChecked = Properties.Settings.Default.NetworkDetect;
         }
 
         #endregion

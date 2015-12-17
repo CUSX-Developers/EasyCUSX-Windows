@@ -64,8 +64,6 @@
             <Label Content="关于" HorizontalAlignment="Left" Margin="11,10,0,0" VerticalAlignment="Top" FontSize="22" Foreground="#FF999999"/>
             <Label x:Name="Label_version" Content="易·山传" HorizontalAlignment="Left" Margin="11,46.4,0,0" VerticalAlignment="Top" Width="176"/>
             <Label Content="高级" HorizontalAlignment="Left" Margin="11,127.069,0,0" VerticalAlignment="Top" FontSize="22" Foreground="#FF999999"/>
-            <Button x:Name="FixEntryButton" Content="重置网络连接" HorizontalAlignment="Left" Margin="15,187.927,0,0" VerticalAlignment="Top" Width="119.415" Style="{DynamicResource BlueButton}" FontSize="14" Click="FixEntryButton_Click"/>
-            <CheckBox x:Name="CheckBox_networkDetect" Content="检测校园网络波动" HorizontalAlignment="Left" Margin="15,167.829,0,0" VerticalAlignment="Top"/>
         </Grid>
         <!--WorkMsg Label-->
         <TextBox x:Name="WorkMsg" Margin="10,140.563,10,0" TextWrapping="Wrap" Text="WorkMsgArea" TextAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" FontSize="20" Grid.Column="1" AllowDrop="False" Focusable="False" IsTabStop="False" Height="30" IsReadOnly="True"/>
