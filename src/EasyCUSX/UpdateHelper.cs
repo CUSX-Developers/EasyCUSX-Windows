@@ -3,19 +3,20 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Windows.Forms;
+using ExHandler;
 
 namespace UpdateHelper
 {
     class UpdaterMain
     {
-        public enum CheckStatu
+        public enum CheckStatus
         {
             noNewVersion = 0,
             newVersion = 1,
             Failed = 2,
         }
 
-        public CheckStatu Check(string _currentVersion)
+        public CheckStatus Check(string _currentVersion)
         {
             try
             {
@@ -24,16 +25,17 @@ namespace UpdateHelper
                 client.Dispose();
                 if (_currentVersion == RecvStr)
                 {
-                    return CheckStatu.noNewVersion;
+                    return CheckStatus.noNewVersion;
                 }
                 else
                 {
-                    return CheckStatu.newVersion;
+                    return CheckStatus.newVersion;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return CheckStatu.Failed;
+                new ExceptionHandler(ex.Message.ToString());
+                return CheckStatus.Failed;
             }
         }
 
@@ -41,43 +43,35 @@ namespace UpdateHelper
         {
             try
             {
+                WebClient client = new WebClient();
+                string newlink = Encoding.ASCII.GetString(client.DownloadData("http://api.cusx.net/v1/get.php?appname=easycusx_win&request=downloadlink"));
+                client.DownloadFile(newlink, Application.StartupPath + @"\new.exe");
+                client.Dispose();
                 File.Move(Application.ExecutablePath, Application.StartupPath + @"\old.exe");
-                try
-                {
-                    WebClient client = new WebClient();
-                    string newlink = Encoding.ASCII.GetString(client.DownloadData("http://api.cusx.net/v1/get.php?appname=easycusx_win&request=downloadlink"));
-                    client.DownloadFile(newlink, Application.StartupPath + @"\EasyCUSX.exe");
-                    client.Dispose();
-                    return true;
-                }
-                catch (Exception)
-                {
-                    if (File.Exists(Application.StartupPath + @"\EasyCUSX.exe"))
-                    {
-                        File.Delete(Application.StartupPath + @"\EasyCUSX.exe");
-                    }
-                    File.Move(Application.StartupPath + @"\old.exe", Application.StartupPath + @"\EasyCUSX.exe");
-                    return false;
-                }
+                File.Move(Application.StartupPath + @"\new.exe", Application.StartupPath + @"\EasyCUSX.exe");
+                return true;
             }
-            catch (Exception)
+            catch (WebException)
             {
+                File.Delete(Application.StartupPath + @"\new.exe");
                 return false;
             }
-
+            catch (Exception ex)
+            {
+                new ExceptionHandler(ex.ToString());
+                return false;
+            }
         }
 
         public void CleanUp()
         {
             try
             {
-                if (File.Exists(Application.StartupPath + @"\old.exe"))
-                {
-                    File.Delete(Application.StartupPath + @"\old.exe");
-                }
+                File.Delete(Application.StartupPath + @"\old.exe");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                new ExceptionHandler(ex.ToString());
             }
         }
     }

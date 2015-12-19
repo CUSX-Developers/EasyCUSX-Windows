@@ -3,13 +3,15 @@ using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Threading;
 using System.Windows;
-using System.Windows.Forms; //trayIcon Control
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Effects;
 //Class
 using rasdialHelper;
 using SocketHelper;
 using UpdateHelper;
+using ExHandler;
+using WlanHelper;
 
 namespace EasyCUSX
 {
@@ -18,58 +20,63 @@ namespace EasyCUSX
     /// </summary>
     public partial class MainWindow : Window
     {
-        #region init
+        #region Defines
+
         string ProgramName = "易·山传";
         string version = "2.0.9";
 
         //网络
-        bool WANconnecting = false;
-        bool WANconnected = false;
+        bool WanConnecting = false;
+        bool WanConnected = false;
+        bool WlanConnecting = false;
+        bool WlanConnected = false;
+        bool WanDisconnecting = false;
+        bool WlanDiconnecting = false;
+
         string pppoeusername;
         string pppoepassword;
 
+        //Updater
         bool UpdateChecked = false;
         bool UpdateChecking = false;
 
         //UI
         BlurEffect blur = new BlurEffect();
-
         NotifyIcon notify = new System.Windows.Forms.NotifyIcon();
 
         //import class
         RasHelperMain d = new RasHelperMain();
         UpdaterMain updater = new UpdaterMain();
+        WlanHelperMain wifi = new WlanHelperMain();
 
-        //HeartBeat Handle
-        Thread hbt;
+        //HeartBeat Thread
+        Thread WanHeartBeatDeamonThread;
 
         //enums
-        public enum WorkButtonFlag
+        private enum UIStatusOptions
+        {
+            Idle = 0,
+            Working = 1,
+            Deamon = 2,
+            Error = 3,
+        }
+        private enum NotifyTypeOptions
+        {
+            Error = 0,
+            Warning = 1,
+            Info = 2
+        }
+        private enum StatusPageButtonOptions
         {
             NoFunction = 0,
             Back = 1,
             Disconnect = 2
         }
 
-        public enum CurrectWorkStateFlag
-        {
-            Idle = 0,
-            Connecting = 1,
-            Connected = 2,
-            ErrorMsgShowing = 3,
-            Disconnecting = 4
-        }
-
-        public enum NotifyPopMsgFlag
-        {
-            Error = 0,
-            Warning = 1,
-            Info = 2
-        }
-
         #endregion
 
 
+        #region Main
 
         public MainWindow()
         {
@@ -81,215 +88,228 @@ namespace EasyCUSX
             EasyCUSXInit();
         }
 
-        #region Main Functions
-
-        //Program
-        public void EasyCUSXInit()
+        private void EasyCUSXInit()
         {
-            //清理自动更新文件
-            updater.CleanUp();
+            //禁用UI交互
+            SetUIStatus(UIStatusOptions.Working, "请稍后", "正在检查网络状态");
 
-            //踢出其他客户端
-            KickOtherClient();
-
-            //载入托盘图标
+            //初始化UI
+            //托盘
             notify.Text = ProgramName;
             notify.Icon = Properties.Resources.icon;
             notify.Visible = true;
             notify.Click += notify_Click;
-
-            //载入版本号到UI
+            //sidebar版本号
             Label_version.Content = ProgramName + " " + version;
-
-            //载入当前设置状态到UI
+            //数据填充至UI
             LoadConfig();
+            //Blur性能选项
+            blur.RenderingBias = RenderingBias.Performance;
 
-            //载入当前网络状态到UI并设置必要的状态参数
-            SetCurrectWorkState(CurrectWorkStateFlag.Connecting);
-            SetStateMsg("检测网络状态...");
-
-            Thread temp = new Thread(() =>
+            Thread Do = new Thread(() =>
             {
-                string resultMsg;
-                if (d.CheckNetwork(out resultMsg))
-                {
-                    this.Dispatcher.Invoke(new Action(() =>
-                    {
-                        //Set for disconnect process
-                        pppoeusername = TextBox_Username.Text;
-                        pppoepassword = TextBox_Password.Password;
+                //预清理
+                updater.CleanUp();
+                KickOtherClient();
 
-                        //检查参数是否对auth有效
-                        if (!(pppoeusername != string.Empty && pppoepassword != string.Empty))
+                string outMsg;
+                if (d.CheckNetwork(out outMsg))
+                {
+                    PreSaveCertificate();
+                    //参数为空时Redis Auth服务器可能会无响应数据 && 说明用户是第一次使用
+                    if (!(pppoeusername != string.Empty && pppoepassword != string.Empty))
+                    {
+                        //断开连接防止心跳错误
+                        if (d.HangUp(out outMsg))
                         {
-                            //无效时则表示用户已连接网络并第一次使用，断开连接防止心跳错误
-                            Thread tempT = new Thread(new ThreadStart(WANDisconnect));
-                            tempT.IsBackground = true;
-                            tempT.Start();
-                            return;
+                            SetUIStatus(UIStatusOptions.Idle);
                         }
-                    }));
-                    //设置UI
-                    SetCurrectWorkState(CurrectWorkStateFlag.Connected);
-                    SetWindowVisibility(false);
+                        else
+                        {
+                            SetUIStatus(UIStatusOptions.Error, "出错了!", "初始化时出现错误,请重启电脑再试");
+                        }
+                        return;
+                    }
+                    else
+                    {
+                        //已连接的状态
+                        WanConnected = true;
+                        SetUIStatus(UIStatusOptions.Deamon, "网络已连接", outMsg);
+                        SetWindowVisibility(false);
+                        NotifyPopUp("网络已经处于连接状态\r\n点击托盘图标可 显示/隐藏 窗口");
+                    }
                 }
                 else
                 {
-                    SetCurrectWorkState(CurrectWorkStateFlag.Idle);
+                    //未连接
+                    SetUIStatus(UIStatusOptions.Idle);
                 }
             });
-            temp.IsBackground = true;
-            temp.Start();
+            Do.IsBackground = true;
+            Do.Start();
 
-            //启动网络状态检查线程
-            Thread t = new Thread(new ThreadStart(NetworkCheckLoop));
-            t.IsBackground = true;
-            t.Start();
+            //启动主守护线程
+            Thread MainDeamonThread = new Thread(() => MainDeamon());
+            MainDeamonThread.IsBackground = true;
+            MainDeamonThread.Start();
         }
 
-        private void NetworkCheckLoop()
+        private void MainDeamon()
         {
             try
             {
                 while (true)
                 {
-                    if (WANconnected) //检查有线校园网是否保持着连接
+                    if (WanConnected) //有线网
                     {
                         string Result;
                         if (!d.CheckNetwork(out Result))
                         {
-                            SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, "网络已断开");
-                            NotifyPopUp("有线网络已经断开", NotifyPopMsgFlag.Error);
+                            WanConnected = false;
+                            SetUIStatus(UIStatusOptions.Error, "有线网络已断开","请检查网线是否连接正常");
+                            NotifyPopUp("有线网络已经断开", NotifyTypeOptions.Error);
                         }
                         else
                         {
-                            //HeartBeat packet
-                            //SendSocketAuth(pppoeusername, out Result);
-                            if (hbt == null)
+                            if (!WanDisconnecting)
                             {
-                                hbt = new Thread(() => HeartBeatHandler(true));
-                                hbt.IsBackground = true;
-                                hbt.Start();
-                            }
-                            else if (!hbt.IsAlive)
-                            {
-                                hbt = new Thread(() => HeartBeatHandler(true));
-                                hbt.IsBackground = true;
-                                hbt.Start();
+                                //Check WAN HeartBeat Deamon Thread
+                                if (WanHeartBeatDeamonThread == null || (!WanHeartBeatDeamonThread.IsAlive))
+                                {
+                                    WanHeartBeatDeamonThread = new Thread(() => WanHeartBeatDeamon(true));
+                                    WanHeartBeatDeamonThread.IsBackground = true;
+                                    WanHeartBeatDeamonThread.Start();
+                                }
                             }
                         }
                     }
                     else
                     {
-                        shutdownHeartBeatThread();
+                        ShutdownWanHeartBeatDeamon();
                     }
 
-                    if (!UpdateChecked && WANconnected)
+                    if (WlanConnected)
+                    {
+                        //TODO:Wlan part in Main Deamon
+                    }
+
+                    if (!UpdateChecked && !UpdateChecking && (WanConnected || WlanConnected))
                     {
                         EasyCUSX_Update();
                     }
                     Thread.Sleep(7000);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                new ExceptionHandler(ex.ToString());
             }
         }
 
         private void KickOtherClient()
         {
-            try
+            Process[] procs = Process.GetProcesses();
+            foreach (Process otherclient in procs)
             {
-                Process[] procs = Process.GetProcesses();
-                foreach (Process otherclient in procs)
+                try
                 {
                     if (otherclient.ProcessName.ToLower().Contains("pppoelogin"))
                     {
                         otherclient.Kill();
                     }
                 }
-            }
-            catch (Exception)
-            {
-
+                catch (Exception)
+                {
+                }
             }
         }
 
-        //Network
-        private void WANConnect(string u, string p)
+        #endregion
+
+
+        #region Wan Part
+
+        private void WanConnect(string u, string p)
         {
             string Result;
 
-            //设置到连接中状态
-            SetCurrectWorkState(CurrectWorkStateFlag.Connecting);
+            //设置到工作状态
+            SetUIStatus(UIStatusOptions.Working,"请稍后","正在连接有线网络中");
+            WanConnecting = true;
             Thread.Sleep(500);
 
             //创建Entry
-            SetStateMsg("正在检查设备...");
+            SetStatusMsg("请稍后","正在检查虚拟网络设备");
             if (!d.CreateEntry("EasyCUSX", out Result))
             {
-                SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
+                SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                WanConnecting = false;
                 return;
             }
 
             //开始拨号
-            SetStateMsg("正在连接中...");
+            SetStatusMsg("请稍后", "正在连接至Radius服务器");
             if (!d.DialUp(u, p, "EasyCUSX", out Result))
             {
-                SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
+                SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                WanConnecting = false;
                 return;
             }
 
             //SocketAuth part
-            SetStateMsg("正在验证中...");
-            if (!SendSocketAuth(u, out Result))
+            SetStatusMsg("请稍后", "正在验证账户");
+            if (!SendWanAuth(u, out Result))
             {
-                SetStateMsg("正在重试...");
+                SetStatusMsg("请稍后", "验证账户失败 正在重试");
                 //retry once
-                if (!SendSocketAuth(u, out Result))
+                if (!SendWanAuth(u, out Result))
                 {
-                    WANDisconnect();
-                    SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, "网络不稳定,请重试");
+                    WanDisconnect();
+                    SetUIStatus(UIStatusOptions.Error, "网络不稳定 请尝试重新连接");
+                    WanConnecting = false;
                     return;
                 }
             }
 
-            SetCurrectWorkState(CurrectWorkStateFlag.Connected);
+            WanConnecting = false;
+            WanConnected = true;
+            SetUIStatus(UIStatusOptions.Deamon, "网络已连接", "感谢使用易·山传");
 
             Thread.Sleep(1000);
             SetWindowVisibility(false);
-
-            Thread.Sleep(2000);
-            //检查更新
-            EasyCUSX_Update();
+            NotifyPopUp("易·山传正在后台运行中...\r\n点击托盘图标可 显示/隐藏 窗口");
         }
 
-        private void WANDisconnect()
+        private void WanDisconnect()
         {
+            string Result;
+
             try
             {
-                SetCurrectWorkState(CurrectWorkStateFlag.Disconnecting);
-                shutdownHeartBeatThread();
+                SetUIStatus(UIStatusOptions.Working, "请稍后", "正在断开连接中");
+                WanDisconnecting = true;
+                ShutdownWanHeartBeatDeamon();
 
-                string Result;
-                SendDisconnectAuth(pppoeusername, d.getCurrentIP(), out Result);
+                SendWanDeAuth(pppoeusername, d.getCurrentIP(), out Result);
 
-                if (d.HangUp("EasyCUSX", out Result))
+                if (d.HangUp(out Result))
                 {
-                    SetCurrectWorkState(CurrectWorkStateFlag.Idle);
+                    SetUIStatus(UIStatusOptions.Idle);
                 }
                 else
                 {
-                    SetCurrectWorkState(CurrectWorkStateFlag.ErrorMsgShowing, Result);
+                    SetUIStatus(UIStatusOptions.Error, "出错了!", "断开连接时出现了一些问题 可能没有正常断开");
                 }
+
+                WanConnected = false;
+                WanDisconnecting = false;
             }
             catch (Exception)
             {
             }
-
         }
 
-        private bool SendSocketAuth(string u, out string _inResult)
+        private bool SendWanAuth(string u, out string _inResult)
         {
             if (u == string.Empty)
             {
@@ -316,15 +336,47 @@ namespace EasyCUSX
                         return false;
                     }
                 }
-                //s.JustSend("QUIT\r\n", out _inResult);
-                //s.SocketClose();
 
-                //go HeartBeat
-                hbt = new Thread(() => HeartBeatHandler(false, s));
-                hbt.IsBackground = true;
-                hbt.Start();
+                //启动心跳守护
+                WanHeartBeatDeamonThread = new Thread(() => WanHeartBeatDeamon(false, s));
+                WanHeartBeatDeamonThread.IsBackground = true;
+                WanHeartBeatDeamonThread.Start();
 
-                _inResult = "AuthCompleted";
+                _inResult = "完成";
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private bool SendWanDeAuth(string u, string IP, out string _inResult)
+        {
+            if (u == string.Empty || IP == string.Empty)
+            {
+                _inResult = "ParamInvalid";
+                return true;
+            }
+
+            SocketHelperMain s = new SocketHelperMain();
+            string[] datas = {
+                             "AUTH 33ss333asasasc3ddsd5434fsdasas5\r\n",
+                             string.Format("*3\r\n$7\r\npublish\r\n$11\r\nclientcheck\r\n${0}\r\ndownline:{1}:{2}\r\n", (u.Length + IP.Length + 10).ToString(), u, IP)
+                             };
+            if (s.SocketConnect("172.18.4.3", 6379, out _inResult))
+            {
+                foreach (string data in datas)
+                {
+                    if (!s.Send4Recv(data, out _inResult))
+                    {
+                        s.SocketClose();
+                        return false;
+                    }
+                }
+                s.JustSend("QUIT\r\n", out _inResult);
+                s.SocketClose();
+                _inResult = "完成";
                 return true;
             }
             else
@@ -334,11 +386,11 @@ namespace EasyCUSX
         }
 
         /// <summary>
-        /// HeartBeat Thread Handler
+        /// 用于有线网络的心跳守护线程
         /// </summary>
-        /// <param name="preAuth">set if pre auth is needed</param>
-        /// <param name="s">if pre auth is needed, than this is not needed.</param>
-        private void HeartBeatHandler(bool preAuth, SocketHelperMain s = null)
+        /// <param name="preAuth">设置是否需要预验证</param>
+        /// <param name="s">当不使用预验证时则需要在这里传入用于复用的Socket对象(基于SocketHelper)</param>
+        private void WanHeartBeatDeamon(bool preAuth, SocketHelperMain s = null)
         {
             try
             {
@@ -347,7 +399,7 @@ namespace EasyCUSX
                 {
                     while (true)
                     {
-                        if (SendSocketAuth(pppoeusername, out _inResult))
+                        if (SendWanAuth(pppoeusername, out _inResult))
                         {
                             break;
                         }
@@ -384,16 +436,17 @@ namespace EasyCUSX
             }
         }
 
-        private void shutdownHeartBeatThread()
+        private void ShutdownWanHeartBeatDeamon()
         {
             try
             {
-                if (hbt != null)
+                if (WanHeartBeatDeamonThread != null)
                 {
-                    if (hbt.IsAlive)
+                    if (WanHeartBeatDeamonThread.IsAlive)
                     {
-                        hbt.Abort();
+                        WanHeartBeatDeamonThread.Abort();
                     }
+                    WanHeartBeatDeamonThread = null;
                 }
             }
             catch (Exception)
@@ -402,148 +455,83 @@ namespace EasyCUSX
 
         }
 
-        private bool SendDisconnectAuth(string u, string IP, out string _inResult)
-        {
-            if (u == string.Empty || IP == string.Empty)
-            {
-                _inResult = "ParamInvalid";
-                return true;
-            }
-            SocketHelperMain s = new SocketHelperMain();
-            string[] datas = {
-                             "AUTH 33ss333asasasc3ddsd5434fsdasas5\r\n",
-                             string.Format("*3\r\n$7\r\npublish\r\n$11\r\nclientcheck\r\n${0}\r\ndownline:{1}:{2}\r\n", (u.Length + IP.Length + 10).ToString(), u, IP)
-                             };
-            if (s.SocketConnect("172.18.4.3", 6379, out _inResult))
-            {
-                foreach (string data in datas)
-                {
-                    if (!s.Send4Recv(data, out _inResult))
-                    {
-                        s.SocketClose();
-                        return false;
-                    }
-                }
-                s.JustSend("QUIT\r\n", out _inResult);
-                s.SocketClose();
-                _inResult = "AuthCompleted";
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        private void EasyCUSX_Update()
-        {
-            if (UpdateChecked || UpdateChecking)
-            {
-                return;
-            }
-            UpdateChecking = true;
-            Thread temp = new Thread(() =>
-            {
-                UpdaterMain.CheckStatu status = updater.Check(version);
-                if (status == UpdaterMain.CheckStatu.newVersion)
-                {
-                    UpdateChecked = true;
-                    NotifyPopUp("发现了新版本，开始更新！", NotifyPopMsgFlag.Info);
-                    if (updater.Download())
-                    {
-                        NotifyPopUp("更新下载完成！下次启动易·山传时更新将完成", NotifyPopMsgFlag.Info);
-                    }
-                    else
-                    {
-                        NotifyPopUp("更新下载失败！", NotifyPopMsgFlag.Error);
-                    }
-                }
-                else if (status == UpdaterMain.CheckStatu.noNewVersion)
-                {
-                    Console.WriteLine("No New Version");
-                    //NotifyPopUp("未发现新版本", NotifyPopMsgFlag.Error);
-                    UpdateChecked = true;
-                }
-                else
-                {
-                    Console.WriteLine("Check Update Failed");
-                    //NotifyPopUp("检查更新失败", NotifyPopMsgFlag.Error);
-                }
-
-                UpdateChecking = false;
-            });
-            temp.IsBackground = true;
-            temp.Start();
-
-        }
         #endregion
 
-        #region UI
 
-        //Entrys
+        #region Wlan Part
 
-        private void SetCurrectWorkState(CurrectWorkStateFlag Flag, string ErrorMsg = "")
+        #endregion
+
+
+        #region UI Part
+        /// <summary>
+        /// 更新UI的主入口点
+        /// </summary>
+        /// <param name="Option">指定的UI类型</param>
+        /// <param name="StatusMsgAbove">上部提示信息，仅非Idle时有效</param>
+        /// <param name="StatusMsgBottom">下部提示信息，仅非Idle时有效</param>
+        private void SetUIStatus(UIStatusOptions Option, string StatusMsgAbove = "", string StatusMsgBottom = "")
         {
-            switch (Flag)
+            switch (Option)
             {
-                case CurrectWorkStateFlag.Idle: //idle 0
+                case UIStatusOptions.Idle:
+                    SetStatusMsg("Idle", "Idle Description");
+                    SetLoadAnimeVisibility(false);
                     SetBlurBackground(false);
-                    SetStateMsgVisbility(false);
-                    SetStateMsg("Idle");
-                    SetWorkButton(WorkButtonFlag.NoFunction);
-                    WANconnecting = false;
-                    WANconnected = false;
+                    SetStatusPageButton(StatusPageButtonOptions.NoFunction);
                     break;
 
-                case CurrectWorkStateFlag.Connecting: //connecting 1
+                case UIStatusOptions.Working:
+                    SetStatusMsg(StatusMsgAbove, StatusMsgBottom);
+                    SetLoadAnimeVisibility(true);
                     SetBlurBackground(true);
-                    SetStateMsgVisbility(true);
-                    SetStateMsg("正在连接中");
-                    SetWorkButton(WorkButtonFlag.NoFunction);
-                    WANconnecting = true;
-                    WANconnected = false;
+                    SetStatusPageButton(StatusPageButtonOptions.NoFunction);
                     break;
 
-                case CurrectWorkStateFlag.Connected: //connected 2
+                case UIStatusOptions.Deamon:
+                    SetStatusMsg(StatusMsgAbove, StatusMsgBottom);
+                    SetLoadAnimeVisibility(false);
                     SetBlurBackground(true);
-                    SetStateMsgVisbility(true);
-                    SetStateMsg("网络已连接");
-                    SetWorkButton(WorkButtonFlag.Disconnect);
-                    WANconnecting = false;
-                    WANconnected = true;
+                    SetStatusPageButton(StatusPageButtonOptions.Disconnect);
                     break;
-                case CurrectWorkStateFlag.ErrorMsgShowing: //errorMsgShowing 3
+                case UIStatusOptions.Error:
+                    SetStatusMsg(StatusMsgAbove, StatusMsgBottom);
+                    SetLoadAnimeVisibility(false);
                     SetBlurBackground(true);
-                    SetStateMsgVisbility(true);
-                    SetStateMsg(ErrorMsg);
-                    SetWorkButton(WorkButtonFlag.Back);
-                    WANconnecting = false;
-                    WANconnected = false;
-                    break;
-                case CurrectWorkStateFlag.Disconnecting: //disconnecting 4
-                    SetBlurBackground(true);
-                    SetStateMsgVisbility(true);
-                    SetStateMsg("正在断开中");
-                    SetWorkButton(WorkButtonFlag.NoFunction);
-                    WANconnecting = false;
-                    WANconnected = false;
+                    SetStatusPageButton(StatusPageButtonOptions.Back);
                     break;
             }
         }
-
-        private void NotifyPopUp(string Msg, NotifyPopMsgFlag Flag = NotifyPopMsgFlag.Info, int Duration = 5000)
+        /// <summary>
+        /// 设置程序界面的可视性
+        /// </summary>
+        /// <param name="visible">是否可视</param>
+        private void SetWindowVisibility(bool visible)
+        {
+            this.Dispatcher.Invoke(new Action(() =>
+            {
+                this.Visibility = visible ? Visibility.Visible : Visibility.Hidden;
+            }));
+        }
+        /// <summary>
+        /// 弹出托盘信息
+        /// </summary>
+        /// <param name="Msg">信息内容</param>
+        /// <param name="Flag">信息类型，默认为Info</param>
+        /// <param name="Duration">信息显示时间，默认为5000(ms)</param>
+        private void NotifyPopUp(string Msg, NotifyTypeOptions Flag = NotifyTypeOptions.Info, int Duration = 5000)
         {
             this.Dispatcher.Invoke(new Action(() =>
             {
                 switch (Flag)
                 {
-                    case NotifyPopMsgFlag.Info:
+                    case NotifyTypeOptions.Info:
                         notify.ShowBalloonTip(Duration, "提示", Msg, ToolTipIcon.Info);
                         break;
-                    case NotifyPopMsgFlag.Warning:
+                    case NotifyTypeOptions.Warning:
                         notify.ShowBalloonTip(Duration, "警告", Msg, ToolTipIcon.Warning);
                         break;
-                    case NotifyPopMsgFlag.Error:
+                    case NotifyTypeOptions.Error:
                         notify.ShowBalloonTip(Duration, "错误", Msg, ToolTipIcon.Error);
                         break;
                 }
@@ -551,44 +539,45 @@ namespace EasyCUSX
 
         }
 
-        //Sub
+        //=============== UI AUX Functions ===============
         private void SetBlurBackground(bool on)
         {
             this.Dispatcher.Invoke(new Action(() =>
             {
-                if (on == true)
+                if (on)
                 {
                     blur.Radius = 100;
-                    blur.RenderingBias = RenderingBias.Performance;
                     Main_Content.Effect = blur;
                     Main_Content.IsEnabled = false;
                     Collapsed(1);
-                    WorkMsg.Visibility = Visibility.Visible;
+                    StatusMsgBottom.Visibility = Visibility.Visible;
+                    StatusMsgAbove.Visibility = Visibility.Visible;
                 }
                 else
                 {
                     blur.Radius = 0;
                     Main_Content.Effect = blur;
                     Main_Content.IsEnabled = true;
+                    StatusMsgBottom.Visibility = Visibility.Hidden;
+                    StatusMsgAbove.Visibility = Visibility.Hidden;
                 }
             }));
         }
-
-        private void SetWorkButton(WorkButtonFlag Flag)
+        private void SetStatusPageButton(StatusPageButtonOptions Flag)
         {
             this.Dispatcher.Invoke(new Action(() =>
             {
                 switch (Flag)
                 {
-                    case WorkButtonFlag.NoFunction://hide(idle/processing) 1
+                    case StatusPageButtonOptions.NoFunction: //hide(idle/processing) 1
                         WorkButton.Visibility = Visibility.Hidden;
                         WorkButton.Content = "noContent";
                         break;
-                    case WorkButtonFlag.Back://ProcessStop(ShowErrorMsg/WaitForUserBack) 2
+                    case StatusPageButtonOptions.Back: //ProcessStop(ShowErrorMsg/WaitForUserBack) 2
                         WorkButton.Visibility = Visibility.Visible;
                         WorkButton.Content = "返 回";
                         break;
-                    case WorkButtonFlag.Disconnect://success(DisconnectButton) 3
+                    case StatusPageButtonOptions.Disconnect: //success(DisconnectButton) 3
                         WorkButton.Visibility = Visibility.Visible;
                         WorkButton.Content = "断 开 连 接";
                         break;
@@ -596,49 +585,77 @@ namespace EasyCUSX
                 }
             }));
         }
-
-        private void SetStateMsgVisbility(bool on)
+        private void SetStatusMsg(string above, string bottom)
         {
             this.Dispatcher.Invoke(new Action(() =>
             {
-                if (on == true)
-                {
-                    WorkMsg.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    WorkMsg.Visibility = Visibility.Hidden;
-                }
+                StatusMsgAbove.Text = above;
+                StatusMsgBottom.Text = bottom;
             }));
         }
-
-        private void SetStateMsg(string msg)
+        private void SetLoadAnimeVisibility(bool on)
         {
             this.Dispatcher.Invoke(new Action(() =>
             {
-                WorkMsg.Text = msg;
+                LoadingAnimation.Visibility = on ? Visibility.Visible : Visibility.Hidden;
             }));
         }
-
-        private void SetWindowVisibility(bool visible)
-        {
-            this.Dispatcher.Invoke(new Action(() =>
-            {
-                if (visible == true)
-                {
-                    this.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    this.Visibility = Visibility.Hidden;
-                    NotifyPopUp("易·山传正在后台运行中...\r\n点击托盘图标可 显示/隐藏 窗口");
-                }
-            }));
-        }
-
         #endregion
 
-        #region Events
+
+        #region UI Events
+
+        //Functions
+        private void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            //保存选项
+            SaveConfig();
+
+            //连接有线部分
+            PreSaveCertificate();
+
+            //开始拨号
+            Thread t = new Thread(() => WanConnect(pppoeusername, pppoepassword));
+            t.IsBackground = true;
+            t.Start();
+        }
+
+        private void WLANLoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            //保存选项
+            SaveConfig();
+
+            //连接无线部分
+            PreSaveCertificate();
+
+            //开始连接
+            //TODO:Wlan connect button
+            //Thread t = new Thread(() => ????);
+            //t.IsBackground = true;
+            //t.Start();
+        }
+
+        private void WorkButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (WanConnected == false)
+            {
+                SetUIStatus(UIStatusOptions.Idle); //Back Button
+            }
+            if (WanConnected == true)
+            {
+                Thread t = new Thread(() => WanDisconnect()); //Wan Disconnect Button
+                t.IsBackground = true;
+                t.Start();
+            }
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            //因为已连接时界面被禁用,所以不做网络连接判断
+            notify.Visible = false;
+            MainWPFWindow.Visibility = Visibility.Hidden;
+            System.Windows.Application.Current.Shutdown();
+        }
 
         //UI
         private void AdvancedButton_Expanded(object sender, RoutedEventArgs e)
@@ -687,47 +704,9 @@ namespace EasyCUSX
             }
         }
 
-        //Functions
-        private void LoginButton_Click(object sender, RoutedEventArgs e)
-        {
-            //保存选项
-            SaveConfig();
-
-            //拨号部分
-            //Set for disconnect
-            pppoeusername = TextBox_Username.Text;
-            pppoepassword = TextBox_Password.Password;
-            //开始拨号
-            Thread t = new Thread(() => WANConnect(pppoeusername, pppoepassword));
-            t.IsBackground = true;
-            t.Start();
-        }
-
-        private void WorkButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (WANconnecting == false && WANconnected == false)
-            {
-                SetCurrectWorkState(CurrectWorkStateFlag.Idle); //BackButton
-            }
-            if (WANconnected == true)
-            {
-                Thread t = new Thread(() => WANDisconnect()); //WANDisconnectButton
-                t.IsBackground = true;
-                t.Start();
-            }
-        }
-
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
-        {
-            //因为已连接时界面被禁用,所以不做网络连接判断
-            notify.Visible = false;
-            MainWPFWindow.Visibility = Visibility.Hidden;
-            System.Windows.Application.Current.Shutdown();
-        }
-
         private void MainWPFWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (WANconnecting == true || WANconnected == true)
+            if (WanConnected || WlanConnected)
             {
                 e.Cancel = true;
                 System.Windows.Forms.MessageBox.Show("请先断开连接!");
@@ -751,6 +730,7 @@ namespace EasyCUSX
 
         #endregion
 
+
         #region Data
 
         private void SaveConfig()
@@ -767,14 +747,52 @@ namespace EasyCUSX
             Properties.Settings.Default.REMpass = CheckBox_REMpass.IsChecked.Value;
             Properties.Settings.Default.Save();
         }
-
         private void LoadConfig()
         {
             TextBox_Username.Text = Properties.Settings.Default.username;
             TextBox_Password.Password = Properties.Settings.Default.password;
             CheckBox_REMpass.IsChecked = Properties.Settings.Default.REMpass;
         }
+        private void PreSaveCertificate()
+        {
+            this.Dispatcher.Invoke(new Action(() =>
+            {
+                pppoeusername = TextBox_Username.Text;
+                pppoepassword = TextBox_Password.Password;
+            }));
+        }
 
         #endregion
+
+
+        private void EasyCUSX_Update()
+        {
+            UpdateChecking = true;
+            Thread temp = new Thread(() =>
+            {
+                UpdaterMain.CheckStatus status = updater.Check(version);
+                if (status == UpdaterMain.CheckStatus.newVersion)
+                {
+                    UpdateChecked = true;
+                    NotifyPopUp("发现了新版本，开始更新！", NotifyTypeOptions.Info);
+                    if (updater.Download())
+                    {
+                        NotifyPopUp("更新下载完成！下次启动易·山传时更新将完成", NotifyTypeOptions.Info);
+                    }
+                    else
+                    {
+                        NotifyPopUp("更新下载失败！", NotifyTypeOptions.Error);
+                    }
+                }
+                else if (status == UpdaterMain.CheckStatus.noNewVersion)
+                {
+                    UpdateChecked = true;
+                }
+
+                UpdateChecking = false;
+            });
+            temp.IsBackground = true;
+            temp.Start();
+        }
     }
 }

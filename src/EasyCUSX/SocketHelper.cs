@@ -90,7 +90,7 @@ namespace SocketHelper
             }
             catch (Exception)
             {
-                RecvStr = "Something went wrong";
+                RecvStr = "发送失败";
                 return false;
             }
         }

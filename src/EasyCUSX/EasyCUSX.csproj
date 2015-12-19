@@ -77,7 +77,9 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExceptionHandler.cs" />
     <Compile Include="UpdateHelper.cs" />
+    <Compile Include="WlanHelper.cs" />
     <Page Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

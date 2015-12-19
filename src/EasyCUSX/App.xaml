@@ -4,41 +4,43 @@
              xmlns:Themes="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero" x:Class="EasyCUSX.App"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-		
-		<!--窗口阴影-->
+
+        <!--窗口阴影-->
         <Style x:Key="WindowShadowStyle" TargetType="{x:Type Window}">
-        	<Setter Property="AllowsTransparency" Value="true"/>
-        	<Setter Property="Background" Value="Transparent"/>
-        	<Setter Property="FontFamily" Value="Consolas, Microsoft YaHei"/>
-        	<Setter Property="ResizeMode" Value="NoResize"/> <!--NoResize-->
-			<Setter Property="FontSize" Value="13"/>
-        	<Setter Property="WindowStyle" Value="None"/> <!--NoWindow-->
-        	<Setter Property="Template">
-        		<Setter.Value>
-        			<ControlTemplate TargetType="{x:Type Window}">
-        				<Grid Margin="10">
-        					<Rectangle Fill="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
+            <Setter Property="AllowsTransparency" Value="true"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="FontFamily" Value="Consolas, Microsoft YaHei"/>
+            <Setter Property="ResizeMode" Value="NoResize"/>
+            <!--NoResize-->
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="WindowStyle" Value="None"/>
+            <!--NoWindow-->
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Window}">
+                        <Grid Margin="10">
+                            <Rectangle Fill="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
         						RadiusX="2" RadiusY="2">
-        						<Rectangle.Effect>
-        							<DropShadowEffect BlurRadius="13" ShadowDepth="0"/>
-        						</Rectangle.Effect>
-        					</Rectangle>
-        					<Border Background="{TemplateBinding Background}"
+                                <Rectangle.Effect>
+                                    <DropShadowEffect BlurRadius="13" ShadowDepth="0"/>
+                                </Rectangle.Effect>
+                            </Rectangle>
+                            <Border Background="{TemplateBinding Background}"
         						BorderBrush="{TemplateBinding BorderBrush}"
         						BorderThickness="{TemplateBinding BorderThickness}"
         						Padding="{TemplateBinding Margin}"
         						SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
         						CornerRadius="5">
-        						<ContentPresenter />
-        					</Border>
-        				</Grid>
-        			</ControlTemplate>
-        		</Setter.Value>
-        	</Setter>
+                                <ContentPresenter />
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-		<!--LoginButton-->
-		<!--正常 #FF09A3DC 悬浮 #FF3CC3F5 按下 #FF098CBC-->
+        <!--LoginButton-->
+        <!--正常 #FF09A3DC 悬浮 #FF3CC3F5 按下 #FF098CBC-->
         <Style x:Key="BlueButton" TargetType="Button">
             <Setter Property="FontSize" Value="14.667"/>
             <Setter Property="Foreground" Value="White"/>
@@ -79,11 +81,11 @@
             </Setter>
         </Style>
 
-		<!--CloseButton-->
-		<!--正常 #00000000(Content:black) 悬浮 #FFD44027(Content:White) 按下 #FFA62A15(Content:White)-->
+        <!--CloseButton-->
+        <!--正常 #00000000(Content:black) 悬浮 #FFD44027(Content:White) 按下 #FFA62A15(Content:White)-->
         <Style x:Key="CloseButton" TargetType="Button">
-			<Setter Property="Width" Value="30"/>
-			<Setter Property="Height" Value="30"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -119,7 +121,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <!--CloseButtonContent-->
         <Style x:Key="close_x_string" TargetType="Path">
             <Setter Property="Stretch" Value="Fill"/>
@@ -128,6 +130,6 @@
             <Setter Property="Height" Value="10"/>
             <Setter Property="Width" Value="10"/>
         </Style>
-        
+
     </Application.Resources>
 </Application>
