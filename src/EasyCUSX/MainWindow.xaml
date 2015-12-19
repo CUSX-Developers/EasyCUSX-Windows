@@ -85,7 +85,7 @@
 
             <!--LoginButton-->
             <Button x:Name="LoginButton" Content="登录有线" Margin="39,239.94,193,50" Style="{DynamicResource BlueButton}" IsDefault="True" Click="LoginButton_Click" FontFamily="Microsoft YaHei, Consolas"/>
-            <Button x:Name="WLANLoginButton" Content="登录无线" Margin="193,239.94,39,50" Style="{DynamicResource BlueButton}" IsDefault="True" Click="WLANLoginButton_Click" FontFamily="Microsoft YaHei, Consolas"/>
+            <Button x:Name="WLANLoginButton" Content="登录无线" Margin="193,239.94,39,50" Style="{DynamicResource BlueButton}" Click="WLANLoginButton_Click" FontFamily="Microsoft YaHei, Consolas"/>
 
             <!--TopBanner-->
             <Border Margin="39,42.563,39,227.437" BorderThickness="0" BorderBrush="Black" Width="302" Height="60" >
