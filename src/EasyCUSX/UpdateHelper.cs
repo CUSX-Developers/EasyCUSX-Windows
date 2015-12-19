@@ -34,7 +34,6 @@ namespace UpdateHelper
             }
             catch (Exception ex)
             {
-                new ExceptionHandler(ex.Message.ToString());
                 return CheckStatus.Failed;
             }
         }
