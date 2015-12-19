@@ -460,6 +460,15 @@ namespace EasyCUSX
 
         #region Wlan Part
 
+        private void WlanConnect(string u, string p)
+        {
+            WlanConnecting = true;
+            SetUIStatus(UIStatusOptions.Working, "请稍后", "正在扫描无线网络");
+            Thread.Sleep(1500);
+            SetUIStatus(UIStatusOptions.Error, "抱歉", "由于无线校园网的接口不完善\r\n本功能仍在测试 暂未开放");
+            WlanConnecting = false;
+        }
+
         #endregion
 
 
@@ -629,10 +638,9 @@ namespace EasyCUSX
             PreSaveCertificate();
 
             //开始连接
-            //TODO:Wlan connect button
-            //Thread t = new Thread(() => ????);
-            //t.IsBackground = true;
-            //t.Start();
+            Thread t = new Thread(() => WlanConnect(pppoeusername, pppoepassword));
+            t.IsBackground = true;
+            t.Start();
         }
 
         private void WorkButton_Click(object sender, RoutedEventArgs e)
