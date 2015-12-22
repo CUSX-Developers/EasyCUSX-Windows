@@ -160,26 +160,23 @@ namespace EasyCUSX
             {
                 while (true)
                 {
-                    if (WanConnected) //有线网
+                    if (WanConnected && !WanDisconnecting) //有线网
                     {
                         string Result;
                         if (!d.CheckNetwork(out Result))
                         {
                             WanConnected = false;
-                            SetUIStatus(UIStatusOptions.Error, "有线网络已断开","请检查网线是否连接正常");
+                            SetUIStatus(UIStatusOptions.Error, "有线网络已断开", "请检查网线是否连接正常");
                             NotifyPopUp("有线网络已经断开", NotifyTypeOptions.Error);
                         }
                         else
                         {
-                            if (!WanDisconnecting)
+                            //Check WAN HeartBeat Deamon Thread
+                            if (WanHeartBeatDeamonThread == null || (!WanHeartBeatDeamonThread.IsAlive))
                             {
-                                //Check WAN HeartBeat Deamon Thread
-                                if (WanHeartBeatDeamonThread == null || (!WanHeartBeatDeamonThread.IsAlive))
-                                {
-                                    WanHeartBeatDeamonThread = new Thread(() => WanHeartBeatDeamon(true));
-                                    WanHeartBeatDeamonThread.IsBackground = true;
-                                    WanHeartBeatDeamonThread.Start();
-                                }
+                                WanHeartBeatDeamonThread = new Thread(() => WanHeartBeatDeamon(true));
+                                WanHeartBeatDeamonThread.IsBackground = true;
+                                WanHeartBeatDeamonThread.Start();
                             }
                         }
                     }
