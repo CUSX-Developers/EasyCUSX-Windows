@@ -231,12 +231,12 @@ namespace EasyCUSX
             string Result;
 
             //设置到工作状态
-            SetUIStatus(UIStatusOptions.Working,"请稍后","正在连接有线网络中");
+            SetUIStatus(UIStatusOptions.Working, "请稍后", "正在连接有线网络中");
             WanConnecting = true;
             Thread.Sleep(500);
 
             //创建Entry
-            SetStatusMsg("请稍后","正在检查虚拟网络设备");
+            SetStatusMsg("请稍后", "正在检查虚拟网络设备");
             if (!d.CreateEntry("EasyCUSX", out Result))
             {
                 SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
