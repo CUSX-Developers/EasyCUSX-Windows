@@ -106,7 +106,7 @@
                 </Border.Background>
             </Border>
             <!--CheckBoxs-->
-            <CheckBox x:Name="CheckBox_REMpass" Content="记住密码" HorizontalAlignment="Left" Margin="65,205,0,0" VerticalAlignment="Top" Width="77" Height="15" FontSize="14" FontFamily="Microsoft YaHei, Consolas"/>
+            <CheckBox x:Name="CheckBox_REMpass" Content="记住密码" HorizontalAlignment="Left" Margin="65,205,0,0" VerticalAlignment="Top" Width="77" Height="20" FontSize="14" FontFamily="Microsoft YaHei, Consolas" VerticalContentAlignment="Center"/>
 
             <!--Advanced Button-->
             <Expander x:Name="AdvancedButton" Header="" HorizontalAlignment="Left" Margin="348,300.4,0,0" VerticalAlignment="Top" ExpandDirection="Right" Expanded="AdvancedButton_Expanded" Collapsed="AdvancedButton_Collapsed" Height="23"/>
@@ -115,14 +115,15 @@
             <Button x:Name="CloseButton" Grid.Column="1" HorizontalAlignment="Left" Margin="350,0,0,0" VerticalAlignment="Top" Style="{DynamicResource CloseButton}" Click="CloseButton_Click">
                 <Path Data="M50,25 L25,50 M25,25 50,50" Style="{DynamicResource close_x_string}"/>
             </Button>
-            <TextBlock Margin="39,300.4,39,10" TextWrapping="Wrap" Text="用户交流群 512985336" HorizontalAlignment="Center" VerticalAlignment="Center" ScrollViewer.VerticalScrollBarVisibility="Disabled" FontFamily="Microsoft YaHei, Consolas"/>
         </Grid>
         <Grid Grid.Column="1" Height="330" Margin="0,0,-187,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="187">
             <Border x:Name="ExpandedBorder" CornerRadius="0" Height="330" Width="1" Background="Black" Margin="0,0,186,0" Visibility="Hidden"/>
-            <Label Content="关于" HorizontalAlignment="Left" Margin="11,10,0,0" VerticalAlignment="Top" FontSize="22" Foreground="#FF999999" FontFamily="Microsoft YaHei, Consolas"/>
-            <Label x:Name="Label_version" Content="易·山传" HorizontalAlignment="Left" Margin="11,46.4,0,0" VerticalAlignment="Top" Width="176" FontFamily="Microsoft YaHei, Consolas"/>
-            <Label Content="高级" HorizontalAlignment="Left" Margin="11,127.069,0,0" VerticalAlignment="Top" FontSize="22" Foreground="#FF999999" FontFamily="Microsoft YaHei, Consolas"/>
-            <Button x:Name="FixEntryButton" Content="重置网络连接" HorizontalAlignment="Left" Margin="15,167.829,0,0" VerticalAlignment="Top" Width="119.415" Style="{DynamicResource BlueButton}" FontSize="14" Click="FixEntryButton_Click" FontFamily="Microsoft YaHei, Consolas"/>
+            <Label Content="关于 易·山传" HorizontalAlignment="Left" Margin="11,10,0,0" VerticalAlignment="Top" FontSize="22" Foreground="#FF999999" FontFamily="Microsoft YaHei, Consolas"/>
+            <TextBlock x:Name="TextBlock_About" Text='易·山传 (Windows 版本) 是 "易·山传" 企划的一部分。' Margin="15,49,6,235.931" FontFamily="Microsoft YaHei, Consolas" TextWrapping="WrapWithOverflow"/>
+            <Label x:Name="Label_version" Content="版本: " Margin="11,85.069,0,212" FontFamily="Microsoft YaHei, Consolas"/>
+
+            <Label Content="高级" HorizontalAlignment="Left" Margin="11,167.069,0,0" VerticalAlignment="Top" FontSize="22" Foreground="#FF999999" FontFamily="Microsoft YaHei, Consolas"/>
+            <Button x:Name="FixEntryButton" Content="重置网络连接" HorizontalAlignment="Left" Margin="15,207.829,0,0" VerticalAlignment="Top" Width="119.415" Style="{DynamicResource BlueButton}" FontSize="14" Click="FixEntryButton_Click" FontFamily="Microsoft YaHei, Consolas"/>
         </Grid>
 
         <!--StatusPage Button-->

@@ -100,7 +100,7 @@ namespace EasyCUSX
             notify.Visible = true;
             notify.Click += notify_Click;
             //sidebar版本号
-            Label_version.Content = ProgramName + " " + version;
+            Label_version.Content = Label_version.Content + " " + version;
             //数据填充至UI
             LoadConfig();
             //Blur性能选项
