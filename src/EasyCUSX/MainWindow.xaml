@@ -130,8 +130,8 @@
         <Button x:Name="WorkButton" Content="" Margin="39,239.94,39,50" Style="{DynamicResource BlueButton}" IsDefault="True" Width="302" Grid.Column="1" Visibility="Hidden" Click="WorkButton_Click" FontFamily="Microsoft YaHei, Consolas"/>
 
         <!--StatusMsg Label-->
-        <TextBox x:Name="StatusMsgAbove" Margin="10,105.563,10,0" TextWrapping="Wrap" Text="StatusMsgAbove" TextAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" FontSize="35" Grid.Column="1" AllowDrop="False" Focusable="False" IsTabStop="False" IsReadOnly="True" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False" FontFamily="Microsoft YaHei, Consolas" Visibility="Hidden"/>
-        <TextBox x:Name="StatusMsgBottom" Margin="10,155,10,0" TextWrapping="Wrap" Text="StatusMsgBottom" TextAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" FontSize="15" Grid.Column="1" AllowDrop="False" Focusable="False" IsTabStop="False" IsReadOnly="True" IsEnabled="False" FontFamily="Microsoft YaHei, Consolas" Visibility="Hidden"/>
+        <TextBox x:Name="StatusMsgAbove" Margin="10,105.563,10,0" TextWrapping="Wrap" Text="StatusMsgAbove" TextAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" FontSize="35" Grid.Column="1" AllowDrop="False" Focusable="False" IsTabStop="False" IsReadOnly="True" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontFamily="Microsoft YaHei, Consolas" Visibility="Hidden"/>
+        <TextBox x:Name="StatusMsgBottom" Margin="10,155,10,0" TextWrapping="Wrap" Text="StatusMsgBottom" TextAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" FontSize="15" Grid.Column="1" AllowDrop="False" Focusable="False" IsTabStop="False" IsReadOnly="True" FontFamily="Microsoft YaHei, Consolas" Visibility="Hidden"/>
 
         <Canvas x:Name="LoadingAnimation" Width = "50" Height = "50" Grid.Column="1" Margin="183,233,147,47" Visibility="Hidden">
             <Canvas.Triggers>
