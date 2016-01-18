@@ -25,7 +25,7 @@ namespace EasyCUSX
         string ProgramName = "易·山传";
         string version = "2.1.0";
 
-        //网络
+        //Network
         bool WanConnecting = false;
         bool WanConnected = false;
         bool WlanConnecting = false;
@@ -219,6 +219,36 @@ namespace EasyCUSX
                 {
                 }
             }
+        }
+
+        private void EasyCUSX_Update()
+        {
+            UpdateChecking = true;
+            Thread temp = new Thread(() =>
+            {
+                UpdaterMain.CheckStatus status = updater.Check(version);
+                if (status == UpdaterMain.CheckStatus.newVersion)
+                {
+                    UpdateChecked = true;
+                    NotifyPopUp("发现了新版本，开始更新！", NotifyTypeOptions.Info);
+                    if (updater.Download())
+                    {
+                        NotifyPopUp("更新下载完成！下次启动易·山传时更新将完成", NotifyTypeOptions.Info);
+                    }
+                    else
+                    {
+                        NotifyPopUp("更新下载失败！", NotifyTypeOptions.Error);
+                    }
+                }
+                else if (status == UpdaterMain.CheckStatus.noNewVersion)
+                {
+                    UpdateChecked = true;
+                }
+
+                UpdateChecking = false;
+            });
+            temp.IsBackground = true;
+            temp.Start();
         }
 
         #endregion
@@ -768,36 +798,5 @@ namespace EasyCUSX
         }
 
         #endregion
-
-
-        private void EasyCUSX_Update()
-        {
-            UpdateChecking = true;
-            Thread temp = new Thread(() =>
-            {
-                UpdaterMain.CheckStatus status = updater.Check(version);
-                if (status == UpdaterMain.CheckStatus.newVersion)
-                {
-                    UpdateChecked = true;
-                    NotifyPopUp("发现了新版本，开始更新！", NotifyTypeOptions.Info);
-                    if (updater.Download())
-                    {
-                        NotifyPopUp("更新下载完成！下次启动易·山传时更新将完成", NotifyTypeOptions.Info);
-                    }
-                    else
-                    {
-                        NotifyPopUp("更新下载失败！", NotifyTypeOptions.Error);
-                    }
-                }
-                else if (status == UpdaterMain.CheckStatus.noNewVersion)
-                {
-                    UpdateChecked = true;
-                }
-
-                UpdateChecking = false;
-            });
-            temp.IsBackground = true;
-            temp.Start();
-        }
     }
 }
