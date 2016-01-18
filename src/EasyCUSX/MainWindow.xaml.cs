@@ -231,7 +231,7 @@ namespace EasyCUSX
             string Result;
 
             //设置到工作状态
-            SetUIStatus(UIStatusOptions.Working, "请稍后", "正在连接有线网络中");
+            SetUIStatus(UIStatusOptions.Working, "请稍后", "即将开始连接有线网络");
             WanConnecting = true;
             Thread.Sleep(500);
 
@@ -245,7 +245,7 @@ namespace EasyCUSX
             }
 
             //开始拨号
-            SetStatusMsg("请稍后", "正在连接至Radius服务器");
+            SetStatusMsg("请稍后", "正在连接至校园网");
             if (!d.DialUp(u, p, "EasyCUSX", out Result))
             {
                 SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
