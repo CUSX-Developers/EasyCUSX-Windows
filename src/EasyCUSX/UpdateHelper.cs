@@ -7,20 +7,21 @@ using ExHandler;
 
 namespace UpdateHelper
 {
-    class UpdaterMain
+    class Updater
     {
-        public enum CheckStatus
+        public static enum CheckStatus
         {
             noNewVersion = 0,
             newVersion = 1,
             Failed = 2,
         }
 
-        public CheckStatus Check(string _currentVersion)
+        public static CheckStatus Check(string _currentVersion)
         {
             try
             {
                 WebClient client = new WebClient();
+                client.Headers.Add(HttpRequestHeader.UserAgent,"");
                 string RecvStr = Encoding.ASCII.GetString(client.DownloadData("http://api.cusx.net/v1/get.php?appname=easycusx_win&request=version"));
                 client.Dispose();
                 if (_currentVersion == RecvStr)
@@ -38,7 +39,7 @@ namespace UpdateHelper
             }
         }
 
-        public bool Download()
+        public static bool Download()
         {
             try
             {
@@ -62,7 +63,7 @@ namespace UpdateHelper
             }
         }
 
-        public void CleanUp()
+        public static void CleanUp()
         {
             try
             {

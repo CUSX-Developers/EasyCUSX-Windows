@@ -46,7 +46,6 @@ namespace EasyCUSX
 
         //import class
         RasHelperMain d = new RasHelperMain();
-        UpdaterMain updater = new UpdaterMain();
         WlanHelperMain wifi = new WlanHelperMain();
 
         //HeartBeat Thread
@@ -109,7 +108,7 @@ namespace EasyCUSX
             Thread Do = new Thread(() =>
             {
                 //预清理
-                updater.CleanUp();
+                Updater.CleanUp();
                 KickOtherClient();
 
                 string outMsg;
@@ -226,12 +225,12 @@ namespace EasyCUSX
             UpdateChecking = true;
             Thread temp = new Thread(() =>
             {
-                UpdaterMain.CheckStatus status = updater.Check(version);
-                if (status == UpdaterMain.CheckStatus.newVersion)
+                Updater.CheckStatus status = Updater.Check(version);
+                if (status == Updater.CheckStatus.newVersion)
                 {
                     UpdateChecked = true;
                     NotifyPopUp("发现了新版本，开始更新！", NotifyTypeOptions.Info);
-                    if (updater.Download())
+                    if (Updater.Download())
                     {
                         NotifyPopUp("更新下载完成！下次启动易·山传时更新将完成", NotifyTypeOptions.Info);
                     }
@@ -240,7 +239,7 @@ namespace EasyCUSX
                         NotifyPopUp("更新下载失败！", NotifyTypeOptions.Error);
                     }
                 }
-                else if (status == UpdaterMain.CheckStatus.noNewVersion)
+                else if (status == Updater.CheckStatus.noNewVersion)
                 {
                     UpdateChecked = true;
                 }
