@@ -9,7 +9,7 @@ namespace UpdateHelper
 {
     class Updater
     {
-        public static enum CheckStatus
+        public enum CheckStatus
         {
             noNewVersion = 0,
             newVersion = 1,

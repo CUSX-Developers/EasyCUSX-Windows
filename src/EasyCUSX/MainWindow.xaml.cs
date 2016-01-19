@@ -24,7 +24,7 @@ namespace EasyCUSX
 
         string ProgramName = "易·山传";
         string ProgramTag = "easycusx_win";
-        string version = "2.1.0";
+        string version = "2.1.1";
 
         //Network
         bool WanConnecting = false;
