@@ -16,12 +16,12 @@ namespace UpdateHelper
             Failed = 2,
         }
 
-        public static CheckStatus Check(string _currentVersion)
+        public static CheckStatus Check(string _currentVersion, string username, string tag)
         {
             try
             {
                 WebClient client = new WebClient();
-                client.Headers.Add(HttpRequestHeader.UserAgent,"");
+                client.Headers.Add(HttpRequestHeader.UserAgent, string.Format("{0}:{1}:{2}:EasyCUSX_Statistics", username, tag, _currentVersion));
                 string RecvStr = Encoding.ASCII.GetString(client.DownloadData("http://api.cusx.net/v1/get.php?appname=easycusx_win&request=version"));
                 client.Dispose();
                 if (_currentVersion == RecvStr)

@@ -23,6 +23,7 @@ namespace EasyCUSX
         #region Defines
 
         string ProgramName = "易·山传";
+        string ProgramTag = "easycusx_win";
         string version = "2.1.0";
 
         //Network
@@ -225,7 +226,7 @@ namespace EasyCUSX
             UpdateChecking = true;
             Thread temp = new Thread(() =>
             {
-                Updater.CheckStatus status = Updater.Check(version);
+                Updater.CheckStatus status = Updater.Check(version, pppoeusername, ProgramTag);
                 if (status == Updater.CheckStatus.newVersion)
                 {
                     UpdateChecked = true;
