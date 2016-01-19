@@ -741,10 +741,13 @@ namespace EasyCUSX
 
         private void MainWPFWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (WanConnected || WlanConnected)
+            if (WanConnected)
             {
-                e.Cancel = true;
-                System.Windows.Forms.MessageBox.Show("请先断开连接!");
+                WanDisconnect();
+            }
+            if (WlanConnected)
+            {
+                //Code
             }
         }
 
