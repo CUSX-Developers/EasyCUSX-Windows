@@ -79,6 +79,7 @@ namespace UpdateHelper
             MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
             byte[] bytesHash = md5.ComputeHash(file);
             md5.Clear();
+            file.Dispose();
             string sTemp = "";
             for (int i = 0; i < bytesHash.Length; i++)
             {
