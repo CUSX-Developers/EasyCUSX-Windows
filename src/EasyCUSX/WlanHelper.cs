@@ -71,20 +71,29 @@ namespace WlanHelper
 
         public static bool checkGateway(out string Result)
         {
-            string rst;
-            Ping ping = new Ping();
-            PingReply pingReply = ping.Send("172.18.4.3");
-            bool ok = (pingReply.Status == IPStatus.Success);
-            if (!ok)
+            try
             {
-                rst = "请先连接到 \"CUSX\" 无线接入点";
+                string rst;
+                Ping ping = new Ping();
+                PingReply pingReply = ping.Send("172.18.4.3");
+                bool ok = (pingReply.Status == IPStatus.Success);
+                if (!ok)
+                {
+                    rst = "请先连接到 \"CUSX\" 无线接入点";
+                }
+                else
+                {
+                    rst = "OK!";
+                }
+                Result = rst;
+                return ok;
             }
-            else
+            catch (Exception)
             {
-                rst = "OK!";
+                Result = "请先连接到 \"CUSX\" 无线接入点";
+                return false;
             }
-            Result = rst;
-            return ok;
+            
         }
 
         public static int auth(string username, string password)
