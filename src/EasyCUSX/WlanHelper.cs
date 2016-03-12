@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.Net.NetworkInformation;
+using System.Net;
+using System.Text.RegularExpressions;
 
 namespace WlanHelper
 {
@@ -13,6 +16,206 @@ namespace WlanHelper
     /// </summary >
     class WlanHelperMain
     {
+        public class CookieWebClient : WebClient
+        {
+            public CookieContainer CookieContainer { get; private set; }
+
+            /// <summary>
+            /// This will instanciate an internal CookieContainer.
+            /// </summary>
+            public CookieWebClient()
+            {
+                this.CookieContainer = new CookieContainer();
+            }
+
+            /// <summary>
+            /// Use this if you want to control the CookieContainer outside this class.
+            /// </summary>
+            public CookieWebClient(CookieContainer cookieContainer)
+            {
+                this.CookieContainer = cookieContainer;
+            }
+
+            protected override WebRequest GetWebRequest(Uri address)
+            {
+                var request = base.GetWebRequest(address) as HttpWebRequest;
+                if (request == null) return base.GetWebRequest(address);
+                request.CookieContainer = CookieContainer;
+                return request;
+            }
+        }
+        public static int AUTH_SUCCESS = 0;
+        public static int AUTH_ALREADY = 1;
+
+        public static int AUTH_IDENTIFYERROR = 2;
+        public static int AUTH_FREEZE = 3;
+        public static int AUTH_OVERDEVICE = 4;
+
+        public static int AUTH_UNREACHABLE = 5;
+        public static int AUTH_TOKEN_MATCH_FAILED = 6;
+
+        public static int AUTH_UNKNOWN_TYPE = 7;
+        public static int AUTH_EXCEPTION = 8;
+
+
+        public static int DEAUTH_SUCCESS = 0;
+        public static int DEAUTH_ALREADY = 1;
+        public static int DEAUTH_IDENTIFYERROR = 2;
+
+        public static int DEAUTH_UNREACHABLE = 3;
+        public static int DEAUTH_TOKEN_MATCH_FAILED = 4;
+
+        public static int DEAUTH_UNKNOWN_TYPE = 5;
+        public static int DEAUTH_EXCEPTION = 6;
+
+
+        public static bool checkGateway(out string Result)
+        {
+            string rst;
+            Ping ping = new Ping();
+            PingReply pingReply = ping.Send("172.18.4.3");
+            bool ok = (pingReply.Status == IPStatus.Success);
+            if (!ok)
+            {
+                rst = "请先连接到 \"CUSX\" 无线接入点";
+            }
+            else
+            {
+                rst = "OK!";
+            }
+            Result = rst;
+            return ok;
+        }
+
+        public static int auth(string username, string password)
+        {
+            try
+            {
+                string token;
+                //get cookie and token
+                var client = new CookieWebClient();
+                string html = Encoding.UTF8.GetString(client.DownloadData("http://172.18.4.3/login.php"));
+                Regex re = new Regex("<input.+?name=\"token\".+?value=\"(.+?)\">");
+                Match m = re.Match(html);
+                if (!m.Success)
+                {
+                    return AUTH_TOKEN_MATCH_FAILED;
+                }
+                token = m.Groups[1].Value;
+
+                html = Encoding.UTF8.GetString(client.UploadValues("http://172.18.4.3/login.php?action=login", "POST",
+                    new System.Collections.Specialized.NameValueCollection{
+                {"token", token},
+                {"username", username},
+                {"password", password},
+                {"type", ""}
+                }));
+
+                if (html.Contains("成功登陆，祝您冲浪愉快"))
+                {
+                    return AUTH_SUCCESS;
+                }
+                else if (html.Contains("您的计算机已经登陆"))
+                {
+                    return AUTH_ALREADY;
+                }
+                else if (html.Contains("您的帐号已经登录,或者登录数超过限制"))
+                {
+                    return AUTH_OVERDEVICE;
+                }
+                else if (html.Contains("您的帐号已经被冻结"))
+                {
+                    return AUTH_FREEZE;
+                }
+                else if (html.Contains("不正确的用户名或密码"))
+                {
+                    return AUTH_IDENTIFYERROR;
+                }
+                else
+                {
+                    return AUTH_UNKNOWN_TYPE;
+                }
+            }
+            catch (Exception)
+            {
+                return AUTH_EXCEPTION;
+            }
+        }
+
+        public static int deAuth(string username, string password)
+        {
+            try
+            {
+                string token;
+                //get cookie and token
+                var client = new CookieWebClient();
+                string html = Encoding.UTF8.GetString(client.DownloadData("http://172.18.4.3/login.php"));
+                Regex re = new Regex("<input.+?name=\"token\".+?value=\"(.+?)\">");
+                Match m = re.Match(html);
+                if (!m.Success)
+                {
+                    return DEAUTH_TOKEN_MATCH_FAILED;
+                }
+                token = m.Groups[1].Value;
+
+                html = Encoding.UTF8.GetString(client.UploadValues("http://172.18.4.3/login.php?action=logout", "POST",
+                    new System.Collections.Specialized.NameValueCollection{
+                {"token", token},
+                {"username", username},
+                {"password", password},
+                {"type", ""}
+                }));
+
+                if (html.Contains("您下网了"))
+                {
+                    return DEAUTH_SUCCESS;
+                }
+                else if (html.Contains("您不在网上"))
+                {
+                    return DEAUTH_ALREADY;
+                }
+                else if (html.Contains("不正确的用户名和密码"))
+                {
+                    return DEAUTH_IDENTIFYERROR;
+                }
+                else
+                {
+                    return AUTH_UNKNOWN_TYPE;
+                }
+            }
+            catch (Exception)
+            {
+                return AUTH_EXCEPTION;
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         //************************************************************
         #region declarations
 
@@ -79,7 +282,7 @@ namespace WlanHelper
             public WLAN_INTERFACE_STATE isState;
         }
         /// <summary >
-        /// This structure contains an array of NIC information
+        /// This structure Contains an array of NIC information
         /// </summary >
         [StructLayout(LayoutKind.Sequential)]
         public struct WLAN_INTERFACE_INFO_LIST

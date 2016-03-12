@@ -12,6 +12,9 @@ using SocketHelper;
 using UpdateHelper;
 using ExHandler;
 using WlanHelper;
+using System.Security.Cryptography;
+using System.Text;
+using System.IO;
 
 namespace EasyCUSX
 {
@@ -24,7 +27,7 @@ namespace EasyCUSX
 
         string ProgramName = "易·山传";
         string ProgramTag = "easycusx_win";
-        string version = "2.1.1";
+        string version = "2.2.2";
 
         //Network
         bool WanConnecting = false;
@@ -32,7 +35,7 @@ namespace EasyCUSX
         bool WlanConnecting = false;
         bool WlanConnected = false;
         bool WanDisconnecting = false;
-        bool WlanDiconnecting = false;
+        bool WlanDisconnecting = false;
 
         string pppoeusername;
         string pppoepassword;
@@ -489,11 +492,129 @@ namespace EasyCUSX
 
         private void WlanConnect(string u, string p)
         {
+            /* WlanConnecting = true;
+             SetUIStatus(UIStatusOptions.Working, "请稍后", "正在扫描无线网络");
+             Thread.Sleep(1500);
+             SetUIStatus(UIStatusOptions.Error, "抱歉", "由于无线校园网的接口不完善\r\n本功能仍在测试 暂未开放");
+             WlanConnecting = false;*/
+            string Result = "";
+
+            //设置到工作状态
+            SetUIStatus(UIStatusOptions.Working, "请稍后", "即将开始连接无线网络");
             WlanConnecting = true;
-            SetUIStatus(UIStatusOptions.Working, "请稍后", "正在扫描无线网络");
-            Thread.Sleep(1500);
-            SetUIStatus(UIStatusOptions.Error, "抱歉", "由于无线校园网的接口不完善\r\n本功能仍在测试 暂未开放");
-            WlanConnecting = false;
+            Thread.Sleep(500);
+
+            //检查gateway连通性
+            SetStatusMsg("请稍后", "正在检查无线连接状态");
+            if (!WlanHelperMain.checkGateway(out Result))
+            {
+                SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                WlanConnecting = false;
+                return;
+            }
+
+            //尝试登录
+            SetStatusMsg("请稍后", "正在验证账号");
+            int status = WlanHelperMain.auth(u, p);
+            if (status == WlanHelperMain.AUTH_SUCCESS || status == WlanHelperMain.AUTH_ALREADY)
+            {
+                WlanConnecting = false;
+                WlanConnected = true;
+                SetUIStatus(UIStatusOptions.Deamon, "网络已连接", "感谢使用易·山传");
+                Thread.Sleep(1000);
+                SetWindowVisibility(false);
+                NotifyPopUp("易·山传正在后台运行中...\r\n点击托盘图标可 显示/隐藏 窗口");
+            }
+            else if (status == WlanHelperMain.AUTH_TOKEN_MATCH_FAILED)
+            {
+                Result = "协议已过期";
+                SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                WlanConnecting = false;
+                return;
+            }
+            else if (status == WlanHelperMain.AUTH_FREEZE)
+            {
+                Result = "账户被冻结/欠费";
+                SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                WlanConnecting = false;
+                return;
+            }
+            else if (status == WlanHelperMain.AUTH_OVERDEVICE)
+            {
+                SetUIStatus(UIStatusOptions.Working, "请稍后", "设备数超过限制 正在尝试解决");
+                if (WlanHelperMain.deAuth(u, p) == WlanHelperMain.DEAUTH_SUCCESS)
+                {
+                    if (WlanHelperMain.auth(u, p) == WlanHelperMain.AUTH_SUCCESS)
+                    {
+                        WlanConnecting = false;
+                        WlanConnected = true;
+                        SetUIStatus(UIStatusOptions.Deamon, "网络已连接", "感谢使用易·山传");
+                        Thread.Sleep(1000);
+                        SetWindowVisibility(false);
+                        NotifyPopUp("易·山传正在后台运行中...\r\n点击托盘图标可 显示/隐藏 窗口");
+                    }
+                }
+                else
+                {
+                    Result = "同时登陆设备数超过限制";
+                    SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                    WlanConnecting = false;
+                    return;
+                }
+            }
+            else if (status == WlanHelperMain.AUTH_IDENTIFYERROR)
+            {
+                Result = "用户名或密码错误";
+                SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                WlanConnecting = false;
+                return;
+            }
+            else if (status == WlanHelperMain.AUTH_UNKNOWN_TYPE)
+            {
+                Result = "出现了未知的错误";
+                SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                WlanConnecting = false;
+                return;
+            }
+            else if (status == WlanHelperMain.AUTH_EXCEPTION)
+            {
+                Result = "校园网验证服务繁忙 请重试";
+                SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                WlanConnecting = false;
+                return;
+            }
+            else
+            {
+                Result = "未被处理的错误";
+                SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                WlanConnecting = false;
+                return;
+            }
+        }
+
+        private void WlanDisconnect()
+        {
+            try
+            {
+                SetUIStatus(UIStatusOptions.Working, "请稍后", "正在注销账户中");
+                WlanDisconnecting = true;
+
+                int status = WlanHelperMain.deAuth(pppoeusername, pppoepassword);
+                if (status == WlanHelperMain.DEAUTH_SUCCESS || status == WlanHelperMain.DEAUTH_ALREADY)
+                {
+                    SetUIStatus(UIStatusOptions.Idle);
+                }
+                else
+                {
+                    SetUIStatus(UIStatusOptions.Error, "出错了!", "注销账户时出现了错误 可能没有正常注销");
+                }
+
+                WlanConnected = false;
+                WlanDisconnecting = false;
+            }
+            catch (Exception)
+            {
+            }
         }
 
         #endregion
@@ -672,13 +793,20 @@ namespace EasyCUSX
 
         private void WorkButton_Click(object sender, RoutedEventArgs e)
         {
-            if (WanConnected == false)
+            if (!WanConnected && !WlanConnected)
             {
                 SetUIStatus(UIStatusOptions.Idle); //Back Button
+                return;
             }
             if (WanConnected == true)
             {
                 Thread t = new Thread(() => WanDisconnect()); //Wan Disconnect Button
+                t.IsBackground = true;
+                t.Start();
+            }
+            else
+            {
+                Thread t = new Thread(() => WlanDisconnect()); //Wlan Disconnect Button
                 t.IsBackground = true;
                 t.Start();
             }

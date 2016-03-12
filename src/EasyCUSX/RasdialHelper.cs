@@ -63,7 +63,7 @@ namespace rasdialHelper
                         _ResultMsg = "请检查 网线/网口/驱动";
                         break;
                     case "691":  //user pass error
-                        _ResultMsg = "请检查 账号/密码/无线是否下网/是否更换了电脑";
+                        _ResultMsg = "请检查 账号密码/无线下网/更换电脑/欠费";
                         break;
                     case "623":   //no phone book
                         _ResultMsg = "虚拟设备错误 请尝试重置网络连接";
