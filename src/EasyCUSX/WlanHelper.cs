@@ -16,32 +16,50 @@ namespace WlanHelper
     /// </summary >
     class WlanHelperMain
     {
-        public class CookieWebClient : WebClient
+        public class CookieAwareWebClient : WebClient
         {
-            public CookieContainer CookieContainer { get; private set; }
+            public CookieContainer CookieContainer { get; set; }
+            public Uri Uri { get; set; }
 
-            /// <summary>
-            /// This will instanciate an internal CookieContainer.
-            /// </summary>
-            public CookieWebClient()
+            public CookieAwareWebClient() : this(new CookieContainer())
             {
-                this.CookieContainer = new CookieContainer();
             }
 
-            /// <summary>
-            /// Use this if you want to control the CookieContainer outside this class.
-            /// </summary>
-            public CookieWebClient(CookieContainer cookieContainer)
+            public CookieAwareWebClient(CookieContainer cookies)
             {
-                this.CookieContainer = cookieContainer;
+                this.CookieContainer = cookies;
             }
 
             protected override WebRequest GetWebRequest(Uri address)
             {
-                var request = base.GetWebRequest(address) as HttpWebRequest;
-                if (request == null) return base.GetWebRequest(address);
-                request.CookieContainer = CookieContainer;
-                return request;
+                WebRequest request = base.GetWebRequest(address);
+                if (request is HttpWebRequest)
+                {
+                    (request as HttpWebRequest).CookieContainer = this.CookieContainer;
+                }
+                HttpWebRequest httpRequest = (HttpWebRequest)request;
+                httpRequest.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+                return httpRequest;
+            }
+
+            protected override WebResponse GetWebResponse(WebRequest request)
+            {
+                WebResponse response = base.GetWebResponse(request);
+                String setCookieHeader = response.Headers[HttpResponseHeader.SetCookie];
+
+                //do something if needed to parse out the cookie.
+                Console.WriteLine(setCookieHeader);
+                if (setCookieHeader != null)
+                {
+                    Regex re = new Regex("PHPSESSID=(.+?);");
+                    Match m = re.Match(setCookieHeader);
+                    if (m.Success)
+                    {
+                        //Cookie cookie = new Cookie("PHPSESSID", m.Groups[1].Value, "/","172.18.4.3");
+                        //this.CookieContainer.Add(cookie);
+                    }
+                }
+                return response;
             }
         }
         public static int AUTH_SUCCESS = 0;
@@ -102,7 +120,7 @@ namespace WlanHelper
             {
                 string token;
                 //get cookie and token
-                var client = new CookieWebClient();
+                var client = new CookieAwareWebClient();
                 string html = Encoding.UTF8.GetString(client.DownloadData("http://172.18.4.3/login.php"));
                 Regex re = new Regex("<input.+?name=\"token\".+?value=\"(.+?)\">");
                 Match m = re.Match(html);
@@ -157,7 +175,7 @@ namespace WlanHelper
             {
                 string token;
                 //get cookie and token
-                var client = new CookieWebClient();
+                var client = new CookieAwareWebClient();
                 string html = Encoding.UTF8.GetString(client.DownloadData("http://172.18.4.3/login.php"));
                 Regex re = new Regex("<input.+?name=\"token\".+?value=\"(.+?)\">");
                 Match m = re.Match(html);
