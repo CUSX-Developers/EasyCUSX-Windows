@@ -58,6 +58,7 @@ namespace UpdateHelper
                 }
                 else
                 {
+                    File.Delete(Application.StartupPath + @"\new.exe");
                     return false;
                 }
             }
@@ -68,6 +69,12 @@ namespace UpdateHelper
             }
             catch (Exception ex)
             {
+                File.Delete(Application.StartupPath + @"\new.exe");
+                if (File.Exists(Application.StartupPath + @"\old.exe"))
+                {
+                    File.Delete(Application.StartupPath + @"\EasyCUSX.exe");
+                    File.Move(Application.StartupPath + @"\old.exe", Application.StartupPath + @"\EasyCUSX.exe");
+                }
                 new ExceptionHandler(ex.ToString());
                 return false;
             }
