@@ -34,7 +34,7 @@ namespace UpdateHelper
                     return CheckStatus.newVersion;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return CheckStatus.Failed;
             }
