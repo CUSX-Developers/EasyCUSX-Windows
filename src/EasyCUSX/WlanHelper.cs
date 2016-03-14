@@ -18,48 +18,47 @@ namespace WlanHelper
     {
         public class CookieAwareWebClient : WebClient
         {
-            public CookieContainer CookieContainer { get; set; }
-            public Uri Uri { get; set; }
-
-            public CookieAwareWebClient() : this(new CookieContainer())
-            {
-            }
-
-            public CookieAwareWebClient(CookieContainer cookies)
-            {
-                this.CookieContainer = cookies;
-            }
+            private  CookieContainer container = new CookieContainer();
+            public bool lockCookie = false;
 
             protected override WebRequest GetWebRequest(Uri address)
             {
+                var servicePoint = ServicePointManager.FindServicePoint(address);
+                servicePoint.Expect100Continue = false;
                 WebRequest request = base.GetWebRequest(address);
-                if (request is HttpWebRequest)
+                HttpWebRequest webRequest = request as HttpWebRequest;
+                if (webRequest != null)
                 {
-                    (request as HttpWebRequest).CookieContainer = this.CookieContainer;
+                    webRequest.KeepAlive = true;
+                    webRequest.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
+                    webRequest.UserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36";
+                    webRequest.CookieContainer = container;
                 }
-                HttpWebRequest httpRequest = (HttpWebRequest)request;
-                httpRequest.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-                return httpRequest;
+                return request;
             }
-
+            protected override WebResponse GetWebResponse(WebRequest request, IAsyncResult result)
+            {
+                WebResponse response = base.GetWebResponse(request, result);
+                ReadCookies(response);
+                return response;
+            }
             protected override WebResponse GetWebResponse(WebRequest request)
             {
                 WebResponse response = base.GetWebResponse(request);
-                String setCookieHeader = response.Headers[HttpResponseHeader.SetCookie];
-
-                //do something if needed to parse out the cookie.
-                Console.WriteLine(setCookieHeader);
-                if (setCookieHeader != null)
+                ReadCookies(response);
+                return response;
+            }
+            private void ReadCookies(WebResponse r)
+            {
+                var response = r as HttpWebResponse;
+                if (response != null)
                 {
-                    Regex re = new Regex("PHPSESSID=(.+?);");
-                    Match m = re.Match(setCookieHeader);
-                    if (m.Success)
+                    CookieCollection cookies = response.Cookies;
+                    if (!lockCookie)
                     {
-                        //Cookie cookie = new Cookie("PHPSESSID", m.Groups[1].Value, "/","172.18.4.3");
-                        //this.CookieContainer.Add(cookie);
+                        container.Add(cookies);
                     }
                 }
-                return response;
             }
         }
         public static int AUTH_SUCCESS = 0;
@@ -118,18 +117,24 @@ namespace WlanHelper
         {
             try
             {
-                string token;
-                //get cookie and token
                 var client = new CookieAwareWebClient();
-                string html = Encoding.UTF8.GetString(client.DownloadData("http://172.18.4.3/login.php"));
+                client.Headers.Add(HttpRequestHeader.Host, "172.18.4.3");
+                client.Headers.Add(HttpRequestHeader.AcceptLanguage, "zh-CN,zh;q=0.8");
+                client.Headers.Add(HttpRequestHeader.Referer, "http://172.18.4.3/login.php");
+                
+                //get cookie and token
+                string html = client.DownloadString("http://172.18.4.3/login.php");
+
                 Regex re = new Regex("<input.+?name=\"token\".+?value=\"(.+?)\">");
                 Match m = re.Match(html);
                 if (!m.Success)
                 {
                     return AUTH_TOKEN_MATCH_FAILED;
                 }
-                token = m.Groups[1].Value;
+                string token = m.Groups[1].Value;
+                client.lockCookie = true;
 
+                //login
                 html = Encoding.UTF8.GetString(client.UploadValues("http://172.18.4.3/login.php?action=login", "POST",
                     new System.Collections.Specialized.NameValueCollection{
                 {"token", token},
@@ -137,7 +142,9 @@ namespace WlanHelper
                 {"password", password},
                 {"type", ""}
                 }));
-
+                client.Headers.Set(HttpRequestHeader.Referer, "http://172.18.4.3/index.php");
+                html = Encoding.UTF8.GetString(client.DownloadData("http://172.18.4.3/RADACCTlist.php"));
+                
                 if (html.Contains("成功登陆，祝您冲浪愉快"))
                 {
                     return AUTH_SUCCESS;
@@ -173,18 +180,24 @@ namespace WlanHelper
         {
             try
             {
-                string token;
-                //get cookie and token
                 var client = new CookieAwareWebClient();
-                string html = Encoding.UTF8.GetString(client.DownloadData("http://172.18.4.3/login.php"));
+                client.Headers.Add(HttpRequestHeader.Host, "172.18.4.3");
+                client.Headers.Add(HttpRequestHeader.AcceptLanguage, "zh-CN,zh;q=0.8");
+                client.Headers.Add(HttpRequestHeader.Referer, "http://172.18.4.3/login.php");
+
+                //get cookie and token
+                string html = client.DownloadString("http://172.18.4.3/login.php");
+
                 Regex re = new Regex("<input.+?name=\"token\".+?value=\"(.+?)\">");
                 Match m = re.Match(html);
                 if (!m.Success)
                 {
-                    return DEAUTH_TOKEN_MATCH_FAILED;
+                    return AUTH_TOKEN_MATCH_FAILED;
                 }
-                token = m.Groups[1].Value;
+                string token = m.Groups[1].Value;
+                client.lockCookie = true;
 
+                //logout
                 html = Encoding.UTF8.GetString(client.UploadValues("http://172.18.4.3/login.php?action=logout", "POST",
                     new System.Collections.Specialized.NameValueCollection{
                 {"token", token},
@@ -192,6 +205,8 @@ namespace WlanHelper
                 {"password", password},
                 {"type", ""}
                 }));
+                client.Headers.Set(HttpRequestHeader.Referer, "http://172.18.4.3/index.php");
+                html = Encoding.UTF8.GetString(client.DownloadData("http://172.18.4.3/RADACCTlist.php"));
 
                 if (html.Contains("您下网了"))
                 {
@@ -215,218 +230,5 @@ namespace WlanHelper
                 return AUTH_EXCEPTION;
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        //************************************************************
-        #region declarations
-
-        private const int WLAN_API_VERSION_2_0 = 2; //Windows Vista WiFi API Version
-        private const int ERROR_SUCCESS = 0;
-
-        /// <summary >
-        /// Opens a connection to the server
-        /// </summary >
-        [DllImport("wlanapi.dll", SetLastError = true)]
-        private static extern UInt32 WlanOpenHandle(UInt32 dwClientVersion,
-                IntPtr pReserved, out UInt32 pdwNegotiatedVersion,
-                out IntPtr phClientHandle);
-
-        /// <summary >
-        /// Closes a connection to the server
-        /// </summary >
-        [DllImport("wlanapi.dll", SetLastError = true)]
-        private static extern UInt32 WlanCloseHandle(IntPtr hClientHandle,
-                                                     IntPtr pReserved);
-
-        /// <summary >
-        /// Enumerates all wireless interfaces in the laptop
-        /// </summary >
-        [DllImport("wlanapi.dll", SetLastError = true)]
-        private static extern UInt32 WlanEnumInterfaces(IntPtr hClientHandle,
-                       IntPtr pReserved, out IntPtr ppInterfaceList);
-
-        /// <summary >
-        /// Frees memory returned by native WiFi functions
-        /// </summary >
-        [DllImport("wlanapi.dll", SetLastError = true)]
-        private static extern void WlanFreeMemory(IntPtr pmemory);
-
-        /// <summary >
-        /// Interface state enums
-        /// </summary >
-        public enum WLAN_INTERFACE_STATE : int
-        {
-            wlan_interface_state_not_ready = 0,
-            wlan_interface_state_connected,
-            wlan_interface_state_ad_hoc_network_formed,
-            wlan_interface_state_disconnecting,
-            wlan_interface_state_disconnected,
-            wlan_interface_state_associating,
-            wlan_interface_state_discovering,
-            wlan_interface_state_authenticating
-        };
-
-        /// <summary >
-        /// Stores interface info
-        /// </summary >
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        public struct WLAN_INTERFACE_INFO
-        {
-            /// GUID->_GUID
-            public Guid InterfaceGuid;
-
-            /// WCHAR[256]
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-            public string strInterfaceDescription;
-
-            /// WLAN_INTERFACE_STATE->_WLAN_INTERFACE_STATE
-            public WLAN_INTERFACE_STATE isState;
-        }
-        /// <summary >
-        /// This structure Contains an array of NIC information
-        /// </summary >
-        [StructLayout(LayoutKind.Sequential)]
-        public struct WLAN_INTERFACE_INFO_LIST
-        {
-            public Int32 dwNumberofItems;
-            public Int32 dwIndex;
-            public WLAN_INTERFACE_INFO[] InterfaceInfo;
-
-            public WLAN_INTERFACE_INFO_LIST(IntPtr pList)
-            {
-                // The first 4 bytes are the number of WLAN_INTERFACE_INFO structures.
-                dwNumberofItems = Marshal.ReadInt32(pList, 0);
-
-                // The next 4 bytes are the index of the current item in the unmanaged API.
-                dwIndex = Marshal.ReadInt32(pList, 4);
-
-                // Construct the array of WLAN_INTERFACE_INFO structures.
-                InterfaceInfo = new WLAN_INTERFACE_INFO[dwNumberofItems];
-
-                for (int i = 0; i < dwNumberofItems; i++)
-                {
-                    // The offset of the array of structures is 8 bytes past the beginning.
-                    // Then, take the index and multiply it by the number of bytes in the
-                    // structure.
-                    // the length of the WLAN_INTERFACE_INFO structure is 532 bytes - this
-                    // was determined by doing a sizeof(WLAN_INTERFACE_INFO) in an
-                    // unmanaged C++ app.
-                    IntPtr pItemList = new IntPtr(pList.ToInt32() + (i * 532) + 8);
-
-                    // Construct the WLAN_INTERFACE_INFO structure, marshal the unmanaged
-                    // structure into it, then copy it to the array of structures.
-                    WLAN_INTERFACE_INFO wii = new WLAN_INTERFACE_INFO();
-                    wii = (WLAN_INTERFACE_INFO)Marshal.PtrToStructure(pItemList,
-                        typeof(WLAN_INTERFACE_INFO));
-                    InterfaceInfo[i] = wii;
-                }
-            }
-        }
-
-        #endregion
-
-        //************************************************************
-        #region Private Functions
-        /// <summary >
-        ///get NIC state  
-        /// </summary >
-        private string getStateDescription(WLAN_INTERFACE_STATE state)
-        {
-            string stateDescription = string.Empty;
-            switch (state)
-            {
-                case WLAN_INTERFACE_STATE.wlan_interface_state_not_ready:
-                    stateDescription = "not ready to operate";
-                    break;
-                case WLAN_INTERFACE_STATE.wlan_interface_state_connected:
-                    stateDescription = "connected";
-                    break;
-                case WLAN_INTERFACE_STATE.wlan_interface_state_ad_hoc_network_formed:
-                    stateDescription = "first node in an adhoc network";
-                    break;
-                case WLAN_INTERFACE_STATE.wlan_interface_state_disconnecting:
-                    stateDescription = "disconnecting";
-                    break;
-                case WLAN_INTERFACE_STATE.wlan_interface_state_disconnected:
-                    stateDescription = "disconnected";
-                    break;
-                case WLAN_INTERFACE_STATE.wlan_interface_state_associating:
-                    stateDescription = "associating";
-                    break;
-                case WLAN_INTERFACE_STATE.wlan_interface_state_discovering:
-                    stateDescription = "discovering";
-                    break;
-                case WLAN_INTERFACE_STATE.wlan_interface_state_authenticating:
-                    stateDescription = "authenticating";
-                    break;
-            }
-
-            return stateDescription;
-        }
-        #endregion
-
-        //************************************************************
-        #region Public Functions
-
-        /// <summary >
-        /// enumerate wireless network adapters using wifi api
-        /// </summary >
-        public void EnumerateNICs()
-        {
-            uint serviceVersion = 0;
-            IntPtr handle = IntPtr.Zero;
-            if (WlanOpenHandle(WLAN_API_VERSION_2_0, IntPtr.Zero,
-                out serviceVersion, out handle) == ERROR_SUCCESS)
-            {
-                IntPtr ppInterfaceList = IntPtr.Zero;
-                WLAN_INTERFACE_INFO_LIST interfaceList;
-
-                if (WlanEnumInterfaces(handle, IntPtr.Zero,
-                              out ppInterfaceList) == ERROR_SUCCESS)
-                {
-                    //Tranfer all values from IntPtr to WLAN_INTERFACE_INFO_LIST structure 
-                    interfaceList = new WLAN_INTERFACE_INFO_LIST(ppInterfaceList);
-
-                    Console.WriteLine("Enumerating Wireless Network Adapters...");
-                    for (int i = 0; i < interfaceList.dwNumberofItems; i++)
-                        Console.WriteLine("{0}-->{1}",
-                          interfaceList.InterfaceInfo[i].strInterfaceDescription,
-                          getStateDescription(interfaceList.InterfaceInfo[i].isState));
-
-                    //frees memory
-                    if (ppInterfaceList != IntPtr.Zero)
-                        WlanFreeMemory(ppInterfaceList);
-                }
-                //close handle
-                WlanCloseHandle(handle, IntPtr.Zero);
-            }
-        }
-        #endregion
     }
 }
