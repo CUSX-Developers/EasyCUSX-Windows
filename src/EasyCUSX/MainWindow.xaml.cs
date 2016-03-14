@@ -234,7 +234,7 @@ namespace EasyCUSX
                 {
                     UpdateChecked = true;
                     NotifyPopUp("发现了新版本，开始更新！", NotifyTypeOptions.Info);
-                    if (Updater.Download())
+                    if (Updater.Download(ProgramTag))
                     {
                         NotifyPopUp("更新下载完成！下次启动易·山传时更新将完成", NotifyTypeOptions.Info);
                     }
