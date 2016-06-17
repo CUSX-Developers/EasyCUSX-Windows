@@ -12,7 +12,7 @@ using System.Windows;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("EasyCUSX")]
-[assembly: AssemblyCopyright("Copyright ©  2014-2015 Lake Chan. All rights reserved.")]
+[assembly: AssemblyCopyright("Copyright ©  2014-2016 Lake Chan. All rights reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
