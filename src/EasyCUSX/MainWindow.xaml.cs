@@ -512,6 +512,13 @@ namespace EasyCUSX
             //尝试登录
             SetStatusMsg("请稍后", "正在验证账号");
             int status = WlanHelperMain.auth(u, p);
+            if (status == WlanHelperMain.AUTH_GENERAL_NOIDENTIFY)
+            {
+                Result = "请填写账号与密码";
+                SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                WlanConnecting = false;
+                return;
+            }
             if (status == WlanHelperMain.AUTH_SUCCESS || status == WlanHelperMain.AUTH_ALREADY)
             {
                 WlanConnecting = false;
@@ -520,6 +527,7 @@ namespace EasyCUSX
                 Thread.Sleep(1000);
                 SetWindowVisibility(false);
                 NotifyPopUp("易·山传正在后台运行中...\r\n点击托盘图标可 显示/隐藏 窗口");
+                return;
             }
             else if (status == WlanHelperMain.AUTH_TOKEN_MATCH_FAILED)
             {
@@ -548,6 +556,7 @@ namespace EasyCUSX
                         Thread.Sleep(1000);
                         SetWindowVisibility(false);
                         NotifyPopUp("易·山传正在后台运行中...\r\n点击托盘图标可 显示/隐藏 窗口");
+                        return;
                     }
                 }
                 else

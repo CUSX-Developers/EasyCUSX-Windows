@@ -77,6 +77,8 @@ namespace WlanHelper
         public static int DEAUTH_UNKNOWN_TYPE = 5;
         public static int DEAUTH_EXCEPTION = 6;
 
+        public static int AUTH_GENERAL_NOIDENTIFY = 100;
+
 
         public static bool checkGateway(out string Result)
         {
@@ -107,6 +109,11 @@ namespace WlanHelper
 
         public static int auth(string username, string password)
         {
+            if (username == string.Empty || password == string.Empty)
+            {
+                return AUTH_GENERAL_NOIDENTIFY;
+            }
+
             try
             {
                 var client = new CookieAwareWebClient();
@@ -170,6 +177,11 @@ namespace WlanHelper
 
         public static int deAuth(string username, string password)
         {
+            if (username == string.Empty || password == string.Empty)
+            {
+                return AUTH_GENERAL_NOIDENTIFY;
+            }
+
             try
             {
                 var client = new CookieAwareWebClient();
