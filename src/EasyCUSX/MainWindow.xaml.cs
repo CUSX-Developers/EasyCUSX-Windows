@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Net.NetworkInformation;
 using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
@@ -12,9 +11,6 @@ using SocketHelper;
 using UpdateHelper;
 using ExHandler;
 using WlanHelper;
-using System.Security.Cryptography;
-using System.Text;
-using System.IO;
 
 namespace EasyCUSX
 {
