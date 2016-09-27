@@ -23,7 +23,7 @@ namespace UpdateHelper
             {
                 WebClient client = new WebClient();
                 client.Headers.Add(HttpRequestHeader.UserAgent, string.Format("{0}:{1}:{2}:EasyCUSX_Statistics", username, tag, _currentVersion));
-                string RecvStr = Encoding.ASCII.GetString(client.DownloadData("http://v2.api.cusx.net/version/" + tag));
+                string RecvStr = Encoding.ASCII.GetString(client.DownloadData("https://api.cusx.net/version/" + tag));
                 client.Dispose();
                 if (_currentVersion == RecvStr)
                 {
@@ -45,9 +45,9 @@ namespace UpdateHelper
             try
             {
                 WebClient client = new WebClient();
-                string newlink = Encoding.ASCII.GetString(client.DownloadData("http://v2.api.cusx.net/download/" + tag));
+                string newlink = Encoding.ASCII.GetString(client.DownloadData("https://api.cusx.net/download/" + tag));
                 client.DownloadFile(newlink, Application.StartupPath + @"\new.exe");
-                string hash = Encoding.ASCII.GetString(client.DownloadData("http://v2.api.cusx.net/hash/" + tag));
+                string hash = Encoding.ASCII.GetString(client.DownloadData("https://api.cusx.net/hash/" + tag));
                 client.Dispose();
 
                 if (checkHash(Application.StartupPath + @"\new.exe", hash))
