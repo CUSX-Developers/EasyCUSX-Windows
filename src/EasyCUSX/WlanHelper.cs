@@ -80,13 +80,17 @@ namespace WlanHelper
         public static int AUTH_GENERAL_NOIDENTIFY = 100;
 
 
-        public static bool checkGateway(out string Result)
+        public static bool checkGateway(bool backup, out string Result)
         {
             try
             {
+                string ip = "172.18.4.11";
+                if (backup) {
+                    ip = "172.18.4.14";
+                }
                 string rst;
                 Ping ping = new Ping();
-                PingReply pingReply = ping.Send("172.18.4.14");
+                PingReply pingReply = ping.Send(ip);
                 bool ok = (pingReply.Status == IPStatus.Success);
                 if (!ok)
                 {
@@ -94,10 +98,10 @@ namespace WlanHelper
                 }
                 else
                 {
-                    rst = "OK!";
+                    rst = ip;
                 }
                 Result = rst;
-                return ok;
+                return ok; 
             }
             catch (Exception)
             {
@@ -107,7 +111,7 @@ namespace WlanHelper
             
         }
 
-        public static int auth(string username, string password)
+        public static int auth(string ip, string username, string password)
         {
             if (username == string.Empty || password == string.Empty)
             {
@@ -117,12 +121,12 @@ namespace WlanHelper
             try
             {
                 var client = new CookieAwareWebClient();
-                client.Headers.Add(HttpRequestHeader.Host, "172.18.4.14");
+                client.Headers.Add(HttpRequestHeader.Host, ip);
                 client.Headers.Add(HttpRequestHeader.AcceptLanguage, "zh-CN,zh;q=0.8");
-                client.Headers.Add(HttpRequestHeader.Referer, "http://172.18.4.14/login.php");
+                client.Headers.Add(HttpRequestHeader.Referer, "http://" + ip + "/login.php");
                 
                 //get cookie and token
-                string html = client.DownloadString("http://172.18.4.14/login.php");
+                string html = client.DownloadString("http://" + ip + "/login.php");
 
                 Regex re = new Regex("<input.+?name=\"token\".+?value=\"(.+?)\">");
                 Match m = re.Match(html);
@@ -134,15 +138,15 @@ namespace WlanHelper
                 client.lockCookie = true;
 
                 //login
-                html = Encoding.UTF8.GetString(client.UploadValues("http://172.18.4.14/login.php?action=login", "POST",
+                html = Encoding.UTF8.GetString(client.UploadValues("http://" + ip + "/login.php?action=login", "POST",
                     new System.Collections.Specialized.NameValueCollection{
                 {"token", token},
                 {"username", username},
                 {"password", password},
                 {"type", ""}
                 }));
-                client.Headers.Set(HttpRequestHeader.Referer, "http://172.18.4.14/index.php");
-                html = Encoding.UTF8.GetString(client.DownloadData("http://172.18.4.14/RADACCTlist.php"));
+                //client.Headers.Set(HttpRequestHeader.Referer, "http://" + ip + "/index.php");
+                //html = Encoding.UTF8.GetString(client.DownloadData("http://" + ip + "/RADACCTlist.php"));
                 
                 if (html.Contains("成功登陆，祝您冲浪愉快"))
                 {
@@ -175,7 +179,7 @@ namespace WlanHelper
             }
         }
 
-        public static int deAuth(string username, string password)
+        public static int deAuth(string ip, string username, string password)
         {
             if (username == string.Empty || password == string.Empty)
             {
@@ -185,12 +189,12 @@ namespace WlanHelper
             try
             {
                 var client = new CookieAwareWebClient();
-                client.Headers.Add(HttpRequestHeader.Host, "172.18.4.14");
+                client.Headers.Add(HttpRequestHeader.Host, ip);
                 client.Headers.Add(HttpRequestHeader.AcceptLanguage, "zh-CN,zh;q=0.8");
-                client.Headers.Add(HttpRequestHeader.Referer, "http://172.18.4.14/login.php");
+                client.Headers.Add(HttpRequestHeader.Referer, "http://" + ip + "/login.php");
 
                 //get cookie and token
-                string html = client.DownloadString("http://172.18.4.14/login.php");
+                string html = client.DownloadString("http://" + ip + "/login.php");
 
                 Regex re = new Regex("<input.+?name=\"token\".+?value=\"(.+?)\">");
                 Match m = re.Match(html);
@@ -202,15 +206,15 @@ namespace WlanHelper
                 client.lockCookie = true;
 
                 //logout
-                html = Encoding.UTF8.GetString(client.UploadValues("http://172.18.4.14/login.php?action=logout", "POST",
+                html = Encoding.UTF8.GetString(client.UploadValues("http://" + ip + "/login.php?action=logout", "POST",
                     new System.Collections.Specialized.NameValueCollection{
                 {"token", token},
                 {"username", username},
                 {"password", password},
                 {"type", ""}
                 }));
-                client.Headers.Set(HttpRequestHeader.Referer, "http://172.18.4.14/index.php");
-                html = Encoding.UTF8.GetString(client.DownloadData("http://172.18.4.14/RADACCTlist.php"));
+                //client.Headers.Set(HttpRequestHeader.Referer, "http://" + ip + "/index.php");
+                //html = Encoding.UTF8.GetString(client.DownloadData("http://" + ip + "/RADACCTlist.php"));
 
                 if (html.Contains("您下网了"))
                 {

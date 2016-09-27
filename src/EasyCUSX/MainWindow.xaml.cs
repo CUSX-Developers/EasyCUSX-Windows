@@ -494,6 +494,7 @@ namespace EasyCUSX
              SetUIStatus(UIStatusOptions.Error, "抱歉", "由于无线校园网的接口不完善\r\n本功能仍在测试 暂未开放");
              WlanConnecting = false;*/
             string Result = "";
+            string AvaliableIP = "";
 
             //设置到工作状态
             SetUIStatus(UIStatusOptions.Working, "请稍后", "即将开始连接无线网络");
@@ -501,17 +502,20 @@ namespace EasyCUSX
             Thread.Sleep(500);
 
             //检查gateway连通性
-            SetStatusMsg("请稍后", "正在检查无线连接状态");
-            if (!WlanHelperMain.checkGateway(out Result))
+            SetStatusMsg("请稍后", "正在寻找最快的验证服务器");
+            if (!WlanHelperMain.checkGateway(false, out Result))
             {
-                SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
-                WlanConnecting = false;
-                return;
+                if (!WlanHelperMain.checkGateway(true, out Result)) {
+                    SetUIStatus(UIStatusOptions.Error, "出错了!", Result);
+                    WlanConnecting = false;
+                    return;
+                }
             }
+            AvaliableIP = Result;
 
             //尝试登录
             SetStatusMsg("请稍后", "正在验证账号");
-            int status = WlanHelperMain.auth(u, p);
+            int status = WlanHelperMain.auth(AvaliableIP, u, p);
             if (status == WlanHelperMain.AUTH_GENERAL_NOIDENTIFY)
             {
                 Result = "请填写账号与密码";
@@ -546,9 +550,9 @@ namespace EasyCUSX
             else if (status == WlanHelperMain.AUTH_OVERDEVICE)
             {
                 SetUIStatus(UIStatusOptions.Working, "请稍后", "设备数超过限制 正在尝试解决");
-                if (WlanHelperMain.deAuth(u, p) == WlanHelperMain.DEAUTH_SUCCESS)
+                if (WlanHelperMain.deAuth(AvaliableIP, u, p) == WlanHelperMain.DEAUTH_SUCCESS)
                 {
-                    if (WlanHelperMain.auth(u, p) == WlanHelperMain.AUTH_SUCCESS)
+                    if (WlanHelperMain.auth(AvaliableIP, u, p) == WlanHelperMain.AUTH_SUCCESS)
                     {
                         WlanConnecting = false;
                         WlanConnected = true;
@@ -601,10 +605,23 @@ namespace EasyCUSX
         {
             try
             {
+                string Result = "";
+                string AvaliableIP;
+                //检查gateway连通性
+                SetStatusMsg("请稍后", "正在寻找最快的验证服务器");
+                if (!WlanHelperMain.checkGateway(false, out Result)) {
+                    if (!WlanHelperMain.checkGateway(true, out Result)) {
+                        SetUIStatus(UIStatusOptions.Error, "出错了!", "注销账户时出现了错误 可能没有正常注销");
+                        WlanConnecting = false;
+                        return;
+                    }
+                }
+                AvaliableIP = Result;
+
                 SetUIStatus(UIStatusOptions.Working, "请稍后", "正在注销账户中");
                 WlanDisconnecting = true;
 
-                int status = WlanHelperMain.deAuth(pppoeusername, pppoepassword);
+                int status = WlanHelperMain.deAuth(AvaliableIP, pppoeusername, pppoepassword);
                 if (status == WlanHelperMain.DEAUTH_SUCCESS || status == WlanHelperMain.DEAUTH_ALREADY)
                 {
                     SetUIStatus(UIStatusOptions.Idle);
