@@ -923,23 +923,30 @@ namespace EasyCUSX
 
         private void SaveConfig()
         {
-            Properties.Settings.Default.username = TextBox_Username.Text;
-            if (CheckBox_REMpass.IsChecked.Value)
-            {
-                Properties.Settings.Default.password = TextBox_Password.Password;
+            try {
+                Properties.Settings.Default.username = TextBox_Username.Text;
+                if (CheckBox_REMpass.IsChecked.Value) {
+                    Properties.Settings.Default.password = TextBox_Password.Password;
+                } else {
+                    Properties.Settings.Default.password = "";
+                }
+                Properties.Settings.Default.REMpass = CheckBox_REMpass.IsChecked.Value;
+                Properties.Settings.Default.Save();
+            } catch (Exception ex) {
+                new ExceptionHandler(ex.ToString());
             }
-            else
-            {
-                Properties.Settings.Default.password = "";
-            }
-            Properties.Settings.Default.REMpass = CheckBox_REMpass.IsChecked.Value;
-            Properties.Settings.Default.Save();
+
         }
         private void LoadConfig()
         {
-            TextBox_Username.Text = Properties.Settings.Default.username;
-            TextBox_Password.Password = Properties.Settings.Default.password;
-            CheckBox_REMpass.IsChecked = Properties.Settings.Default.REMpass;
+            try {
+                TextBox_Username.Text = Properties.Settings.Default.username;
+                TextBox_Password.Password = Properties.Settings.Default.password;
+                CheckBox_REMpass.IsChecked = Properties.Settings.Default.REMpass;
+            } catch (Exception ex) {
+                new ExceptionHandler(ex.ToString());
+            }
+
         }
         private void PreSaveCertificate()
         {
